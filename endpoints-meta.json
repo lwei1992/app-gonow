@@ -2,7 +2,8 @@
   "endpoints": {
     "51928374/nimama": {
       "createdAt": "2026-08-28T19:35:13Z",
-      "updatedAt": "2026-08-28T20:03:03.848Z"
+      "updatedAt": "2026-08-28T20:03:03.848Z",
+      "updatedBy": "customer"
     }
   }
 }
