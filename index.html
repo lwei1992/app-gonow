@@ -305,6 +305,12 @@
       max-width: 320px;
     }
 
+    .endpoint-date {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 2px;
+    }
+
     .customer-list { list-style: none; }
 
     .customer-item {
@@ -626,6 +632,7 @@
 
     const STORAGE_KEY = 'api-gen-config';
     const CUSTOMERS_FILE = 'customers.json';
+    const ENDPOINTS_META_FILE = 'endpoints-meta.json';
 
     const DEFAULT_CUSTOMERS = [
       { id: '88214563', name: '旧老板', code: '123456' },
@@ -634,6 +641,7 @@
     ];
 
     let customers = [];
+    let endpointsMeta = {};
 
     const DEFAULT_CONFIG = {
       user: 'lwei1992',
@@ -705,6 +713,63 @@
         throw new Error('请填写 GitHub 用户名、仓库名和 Token');
       }
       return { user, repo, branch, token };
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '未知';
+      return new Date(iso).toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    async function loadEndpointsMeta() {
+      try {
+        const { branch } = getConfig();
+        const data = await ghFetch(`${contentsApiPath(ENDPOINTS_META_FILE)}?ref=${branch}`);
+        const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        endpointsMeta = JSON.parse(text).endpoints || {};
+      } catch {
+        endpointsMeta = {};
+      }
+    }
+
+    async function saveEndpointsMeta() {
+      await uploadFile(ENDPOINTS_META_FILE, JSON.stringify({ endpoints: endpointsMeta }, null, 2));
+    }
+
+    async function recordEndpointMeta(customerId, name, isNew) {
+      const key = endpointKey(customerId, name);
+      const now = new Date().toISOString();
+      if (isNew || !endpointsMeta[key]) {
+        endpointsMeta[key] = { createdAt: now, updatedAt: now };
+      } else {
+        endpointsMeta[key].updatedAt = now;
+      }
+      await saveEndpointsMeta();
+    }
+
+    async function removeEndpointMeta(customerId, name) {
+      const key = endpointKey(customerId, name);
+      if (endpointsMeta[key]) {
+        delete endpointsMeta[key];
+        await saveEndpointsMeta();
+      }
+    }
+
+    async function backfillEndpointDate(customerId, name) {
+      const key = endpointKey(customerId, name);
+      if (endpointsMeta[key]?.createdAt) return endpointsMeta[key].createdAt;
+      try {
+        const path = endpointPath(customerId, name);
+        const commits = await ghFetch(`/commits?path=${encodeURIComponent(path)}&per_page=1`);
+        if (commits[0]?.commit?.committer?.date) {
+          const date = commits[0].commit.committer.date;
+          endpointsMeta[key] = { createdAt: date, updatedAt: date };
+          return date;
+        }
+      } catch {}
+      return null;
     }
 
     function endpointPath(customerId, name) {
@@ -990,6 +1055,7 @@
     async function deployEndpoint(customerId, name, content) {
       const path = endpointPath(customerId, name);
       const sha = await getFileSha(path);
+      const isNew = !sha;
       const body = {
         message: sha ? `Update ${customerId}/${name}` : `Create ${customerId}/${name}`,
         content: btoa(unescape(encodeURIComponent(content))),
@@ -1001,6 +1067,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      await recordEndpointMeta(customerId, name, isNew);
+      return isNew;
     }
 
     async function getExistingEndpointNames(customerId) {
@@ -1079,6 +1147,7 @@
             const { branch } = getConfig();
             const data = await ghFetch(`${contentsApiPath(endpointPath(customerId, name))}?ref=${branch}`);
             await deleteEndpoint(endpointPath(customerId, name), data.sha);
+            await removeEndpointMeta(customerId, name);
             toast('已删除', 'success');
             await refreshList();
           } catch (e) {
@@ -1101,6 +1170,7 @@
           <div>
             <div class="endpoint-name">${ep.name}</div>
             <div class="endpoint-preview">${ep.customerName}（${ep.customerId}）</div>
+            <div class="endpoint-date">生成：${formatDate(ep.createdAt)}</div>
           </div>
           <div class="endpoint-actions">
             <button class="btn btn-ghost btn-edit" data-customer-id="${ep.customerId}" data-name="${ep.name}">编辑</button>
@@ -1113,10 +1183,15 @@
       bindEndpointEvents();
     }
 
-    function upsertEndpointInList(customerId, name) {
+    function upsertEndpointInList(customerId, name, createdAt) {
       const list = $('#endpoint-list');
       const key = endpointKey(customerId, name);
-      if (list.querySelector(`[data-key="${CSS.escape(key)}"]`)) return;
+      const existing = list.querySelector(`[data-key="${CSS.escape(key)}"]`);
+      if (existing) {
+        const dateEl = existing.querySelector('.endpoint-date');
+        if (dateEl) dateEl.textContent = `生成：${formatDate(createdAt)}`;
+        return;
+      }
 
       const empty = list.querySelector('.empty-state');
       if (empty) empty.remove();
@@ -1129,6 +1204,7 @@
         <div>
           <div class="endpoint-name">${name}</div>
           <div class="endpoint-preview">${customer ? customer.name : customerId}（${customerId}）</div>
+          <div class="endpoint-date">生成：${formatDate(createdAt)}</div>
         </div>
         <div class="endpoint-actions">
           <button class="btn btn-ghost btn-edit" data-customer-id="${customerId}" data-name="${name}">编辑</button>
@@ -1144,15 +1220,30 @@
       const list = $('#endpoint-list');
       try {
         const { branch } = getConfig();
+        await loadEndpointsMeta();
         const endpoints = [];
+        let metaChanged = false;
         for (const c of customers) {
           try {
             const items = await ghFetch(`/contents/${encodeURIComponent(c.id)}?ref=${branch}`);
             for (const f of items.filter((x) => x.type === 'dir')) {
-              endpoints.push({ customerId: c.id, customerName: c.name, name: f.name });
+              const key = endpointKey(c.id, f.name);
+              let createdAt = endpointsMeta[key]?.createdAt;
+              if (!createdAt) {
+                createdAt = await backfillEndpointDate(c.id, f.name);
+                if (createdAt) metaChanged = true;
+              }
+              endpoints.push({
+                customerId: c.id,
+                customerName: c.name,
+                name: f.name,
+                createdAt,
+              });
             }
           } catch {}
         }
+        if (metaChanged) await saveEndpointsMeta();
+        endpoints.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         renderEndpointList(endpoints);
         return endpoints.map((ep) => endpointKey(ep.customerId, ep.name));
       } catch (e) {
@@ -1225,7 +1316,9 @@
 
       try {
         await deployEndpoint(customerId, deployName, content);
-        upsertEndpointInList(customerId, deployName);
+        const metaKey = endpointKey(customerId, deployName);
+        const createdAt = endpointsMeta[metaKey]?.createdAt || new Date().toISOString();
+        upsertEndpointInList(customerId, deployName, createdAt);
         const { user, repo } = getConfig();
         const url = pageUrl(user, repo, customerId, deployName);
         $('#result-url').textContent = url;
