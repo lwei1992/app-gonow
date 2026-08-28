@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>自备号老板 - 项目修改</title>
+  <title>51928374 - 项目修改</title>
   <style>
     :root {
       --bg: #0f1117;
@@ -26,10 +26,14 @@
       min-height: 100vh;
       line-height: 1.6;
     }
-    .container { max-width: 680px; margin: 0 auto; padding: 40px 20px 60px; }
-    header { text-align: center; margin-bottom: 32px; }
-    header h1 { font-size: 1.5rem; font-weight: 700; }
-    header p { color: var(--text-muted); margin-top: 6px; font-size: 0.9rem; }
+    .container { max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      color: var(--accent);
+    }
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -69,32 +73,31 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 11px 22px;
+      padding: 6px 12px;
       border: none;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-primary { background: var(--accent); color: #fff; padding: 11px 22px; font-size: 0.95rem; }
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
     .btn-ghost {
       background: transparent;
       color: var(--text-muted);
       border: 1px solid var(--border);
-      padding: 6px 12px;
-      font-size: 0.8rem;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
     .project-list { list-style: none; }
     .project-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
-      padding: 12px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--border);
       font-size: 0.875rem;
     }
@@ -103,9 +106,17 @@
       font-weight: 600;
       font-family: "SF Mono", "Fira Code", Consolas, monospace;
     }
-    .project-date { color: var(--text-muted); font-size: 0.75rem; margin-top: 2px; }
+    .project-date { color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; }
+    .project-url {
+      color: var(--accent);
+      font-size: 0.75rem;
+      word-break: break-all;
+      margin-top: 4px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    }
+    .project-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .empty-state { text-align: center; color: var(--text-muted); padding: 24px 0; font-size: 0.875rem; }
-    .hidden { display: none !important; }
+    .search-box { margin-bottom: 16px; }
     .modal-overlay {
       display: none;
       position: fixed;
@@ -129,7 +140,7 @@
     }
     .modal h3 { margin-bottom: 16px; font-size: 1rem; }
     .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
-    .modal-actions .btn { flex: 1; }
+    .modal-actions .btn { flex: 1; padding: 11px 22px; font-size: 0.95rem; }
     #toast {
       position: fixed;
       bottom: 24px;
@@ -148,26 +159,23 @@
     #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     #toast.success { border-color: var(--success); }
     #toast.error { border-color: var(--error); }
+    @media (max-width: 520px) {
+      .project-item { flex-direction: column; }
+      .project-actions { width: 100%; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>自备号老板</h1>
-      <p>客户 ID：51928374 · 仅可修改项目内容</p>
+      <h1>51928374</h1>
     </header>
 
-    <div class="card" id="login-card">
-      <h2>验证修改码</h2>
-      <div class="field">
-        <label for="input-code">修改码</label>
-        <input type="password" id="input-code" placeholder="请输入修改码" autocomplete="off">
-      </div>
-      <button class="btn btn-primary" id="btn-login">进入</button>
-    </div>
-
-    <div class="card hidden" id="projects-card">
+    <div class="card">
       <h2>我的项目</h2>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="搜索项目名…" autocomplete="off">
+      </div>
       <ul class="project-list" id="project-list">
         <li class="empty-state">加载中…</li>
       </ul>
@@ -195,16 +203,14 @@
   <div id="toast"></div>
   <script>
     const CUSTOMER_ID = '51928374';
-    const CUSTOMER_NAME = '自备号老板';
-    const CUSTOMER_CODE = '123456';
     const REPO_USER = 'lwei1992';
     const REPO_NAME = 'app-gonow';
     const BRANCH = 'main';
     const GITHUB_TOKEN = String.fromCharCode(103,104,112,95,119,104,110,81,113,90,65,67,50,66,57,109,120,70,50,57,99,87,82,56,56,52,73,69,88,54,79,98,57,69,50,66,67,84,120,52);
-    const SESSION_KEY = 'portal_auth_' + CUSTOMER_ID;
 
     const $ = (s) => document.querySelector(s);
     let endpointsMeta = {};
+    let allProjects = [];
     let editingProject = null;
 
     function toast(msg, type) {
@@ -213,6 +219,17 @@
       el.className = type || '';
       requestAnimationFrame(() => el.classList.add('show'));
       setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function projectUrl(name) {
+      return `${location.origin}/${CUSTOMER_ID}/${name}`;
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(
+        () => toast('已复制到剪贴板', 'success'),
+        () => toast('复制失败', 'error')
+      );
     }
 
     function getToken() {
@@ -284,56 +301,64 @@
       });
     }
 
-    function showProjects() {
-      $('#login-card').classList.add('hidden');
-      $('#projects-card').classList.remove('hidden');
-      loadProjects();
+    function renderProjects(projects) {
+      const list = $('#project-list');
+      if (projects.length === 0) {
+        list.innerHTML = '<li class="empty-state">暂无匹配项目</li>';
+        return;
+      }
+      list.innerHTML = projects.map((p) => {
+        const key = `${CUSTOMER_ID}/${p.name}`;
+        const meta = endpointsMeta[key] || {};
+        const url = projectUrl(p.name);
+        return `
+          <li class="project-item">
+            <div>
+              <div class="project-name">${p.name}</div>
+              <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt)}</div>
+              <div class="project-url">${url}</div>
+            </div>
+            <div class="project-actions">
+              <button class="btn btn-ghost btn-edit" data-name="${p.name}">编辑</button>
+              <a class="btn btn-ghost" href="${url}" target="_blank" rel="noopener">打开</a>
+              <button class="btn btn-ghost btn-copy" data-url="${url}">复制</button>
+            </div>
+          </li>`;
+      }).join('');
+
+      list.querySelectorAll('.btn-edit').forEach((btn) => {
+        btn.onclick = () => openEdit(btn.dataset.name);
+      });
+      list.querySelectorAll('.btn-copy').forEach((btn) => {
+        btn.onclick = () => copyText(btn.dataset.url);
+      });
     }
 
-    function checkSession() {
-      if (sessionStorage.getItem(SESSION_KEY) === '1') showProjects();
+    function filterProjects() {
+      const q = $('#search-input').value.trim().toLowerCase();
+      const filtered = q
+        ? allProjects.filter((p) => p.name.toLowerCase().includes(q))
+        : allProjects;
+      renderProjects(filtered);
     }
-
-    $('#btn-login').onclick = () => {
-      const code = $('#input-code').value.trim();
-      if (code !== CUSTOMER_CODE) return toast('修改码不正确', 'error');
-      sessionStorage.setItem(SESSION_KEY, '1');
-      showProjects();
-    };
-
-    $('#input-code').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') $('#btn-login').click();
-    });
 
     async function loadProjects() {
       const list = $('#project-list');
       try {
         await loadMeta();
         const items = await ghFetch(`/contents/${encodeURIComponent(CUSTOMER_ID)}?ref=${BRANCH}`);
-        const projects = items.filter((f) => f.type === 'dir');
-        if (projects.length === 0) {
+        allProjects = items.filter((f) => f.type === 'dir');
+        if (allProjects.length === 0) {
           list.innerHTML = '<li class="empty-state">暂无项目</li>';
           return;
         }
-        list.innerHTML = projects.map((p) => {
-          const key = `${CUSTOMER_ID}/${p.name}`;
-          const meta = endpointsMeta[key] || {};
-          return `
-            <li class="project-item">
-              <div>
-                <div class="project-name">${p.name}</div>
-                <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt)}</div>
-              </div>
-              <button class="btn btn-ghost btn-edit" data-name="${p.name}">编辑内容</button>
-            </li>`;
-        }).join('');
-        list.querySelectorAll('.btn-edit').forEach((btn) => {
-          btn.onclick = () => openEdit(btn.dataset.name);
-        });
+        filterProjects();
       } catch (e) {
         list.innerHTML = `<li class="empty-state">${e.message}</li>`;
       }
     }
+
+    $('#search-input').addEventListener('input', filterProjects);
 
     async function openEdit(name) {
       editingProject = name;
@@ -396,7 +421,7 @@
       }
     };
 
-    checkSession();
+    loadProjects();
   </script>
 </body>
 </html>
