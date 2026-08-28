@@ -52,6 +52,17 @@
       font-size: 0.95rem;
     }
 
+    .header-toolbar {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .header-toolbar .btn {
+      width: auto;
+      min-width: 140px;
+    }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -533,42 +544,10 @@
     <header>
       <h1>接口跳转生成器</h1>
       <p>通过 GitHub Pages 部署纯文本接口，页面仅输出你指定的内容</p>
+      <div class="header-toolbar">
+        <button class="btn btn-secondary" id="btn-open-github" type="button">GitHub 设置</button>
+      </div>
     </header>
-
-    <!-- GitHub 配置 -->
-    <div class="card">
-      <h2>GitHub 配置</h2>
-      <div class="row">
-        <div class="field">
-          <label for="gh-user">用户名</label>
-          <input type="text" id="gh-user" value="lwei1992" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="gh-repo">仓库名</label>
-          <input type="text" id="gh-repo" value="app-gonow" autocomplete="off">
-        </div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label for="gh-branch">分支</label>
-          <input type="text" id="gh-branch" value="main" autocomplete="off">
-          <p class="hint">GitHub Pages 通常使用 main 或 gh-pages 分支</p>
-        </div>
-        <div class="field token-toggle">
-          <label for="gh-token">Personal Access Token</label>
-          <input type="password" id="gh-token" autocomplete="off">
-          <button type="button" id="toggle-token">显示</button>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="btn-test">测试连接</button>
-        <button class="btn btn-secondary" id="btn-init">初始化部署生成器</button>
-        <button class="btn btn-ghost" id="btn-export">导出配置</button>
-        <button class="btn btn-ghost" id="btn-import">导入配置</button>
-      </div>
-      <input type="file" id="import-file" accept=".json" hidden>
-      <div class="config-status" id="config-status"></div>
-    </div>
 
     <!-- 生成接口 -->
     <div class="card">
@@ -619,6 +598,51 @@
   </div>
 
   <div id="toast"></div>
+
+  <!-- GitHub 设置弹窗 -->
+  <div class="modal-overlay" id="github-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>GitHub 配置</h2>
+        <button class="modal-close" id="btn-close-github" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="field">
+            <label for="gh-user">用户名</label>
+            <input type="text" id="gh-user" value="lwei1992" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="gh-repo">仓库名</label>
+            <input type="text" id="gh-repo" value="app-gonow" autocomplete="off">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="gh-branch">分支</label>
+            <input type="text" id="gh-branch" value="main" autocomplete="off">
+            <p class="hint">GitHub Pages 通常使用 main 或 gh-pages 分支</p>
+          </div>
+          <div class="field token-toggle">
+            <label for="gh-token">Personal Access Token</label>
+            <input type="password" id="gh-token" autocomplete="off">
+            <button type="button" id="toggle-token">显示</button>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-test">测试连接</button>
+          <button class="btn btn-secondary" id="btn-init">初始化部署生成器</button>
+          <button class="btn btn-ghost" id="btn-export">导出配置</button>
+          <button class="btn btn-ghost" id="btn-import">导入配置</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" hidden>
+        <div class="config-status" id="config-status"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-github" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 客户管理弹窗 -->
   <div class="modal-overlay" id="customer-modal">
@@ -1560,6 +1584,9 @@
     $('#btn-open-customers').addEventListener('click', openCustomerModal);
     $('#btn-close-customers').addEventListener('click', closeCustomerModal);
     $('#btn-cancel-customers').addEventListener('click', closeCustomerModal);
+    $('#btn-open-github').addEventListener('click', openGithubModal);
+    $('#btn-close-github').addEventListener('click', closeGithubModal);
+    $('#btn-cancel-github').addEventListener('click', closeGithubModal);
     $('#base-domain').addEventListener('input', () => {
       const repo = fields.repo.value.trim() || DEFAULT_CONFIG.repo;
       const d = $('#base-domain').value.trim() || DEFAULT_BASE_DOMAIN;
@@ -1595,8 +1622,14 @@
     $('#customer-modal').addEventListener('click', (e) => {
       if (e.target.id === 'customer-modal') closeCustomerModal();
     });
+    $('#github-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'github-modal') closeGithubModal();
+    });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeCustomerModal();
+      if (e.key === 'Escape') {
+        closeCustomerModal();
+        closeGithubModal();
+      }
     });
 
     function openCustomerModal() {
@@ -1608,6 +1641,14 @@
 
     function closeCustomerModal() {
       $('#customer-modal').classList.remove('open');
+    }
+
+    function openGithubModal() {
+      $('#github-modal').classList.add('open');
+    }
+
+    function closeGithubModal() {
+      $('#github-modal').classList.remove('open');
     }
 
     $('#btn-add-customer').addEventListener('click', async () => {
