@@ -193,7 +193,6 @@
   </div>
 
   <div id="toast"></div>
-  <script src="../../portal-config.js"></script>
   <script>
     const CUSTOMER_ID = '__CUSTOMER_ID__';
     const CUSTOMER_NAME = '__CUSTOMER_NAME__';
@@ -201,6 +200,7 @@
     const REPO_USER = '__REPO_USER__';
     const REPO_NAME = '__REPO_NAME__';
     const BRANCH = '__BRANCH__';
+    const GITHUB_TOKEN = String.fromCharCode(__PORTAL_TOKEN_CODES__);
     const SESSION_KEY = 'portal_auth_' + CUSTOMER_ID;
 
     const $ = (s) => document.querySelector(s);
@@ -216,9 +216,8 @@
     }
 
     function getToken() {
-      const token = window.PORTAL_CONFIG?.token;
-      if (!token) throw new Error('系统未配置 Token，请联系管理员');
-      return token;
+      if (!GITHUB_TOKEN) throw new Error('系统未配置 Token，请联系管理员');
+      return GITHUB_TOKEN;
     }
 
     async function ghFetch(path, options = {}) {
