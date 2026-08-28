@@ -19,6 +19,16 @@
         "key": "123123",
         "cipher": "1xfU9IH/UvVdY0gDII/h1TQ4+qi2Fvz5ofYTQU9jsvnFZwj79L/dt+qivek2E9DdJc99u7FNU9OJnnNneqEb+gpQSGlELzNUNTyrVwS3ytgOQTTqVAzGkRjtQj+TgOdDNw=="
       }
+    },
+    "51928374/yyeyeye": {
+      "createdAt": "2026-08-28T20:55:14.893Z",
+      "updatedAt": "2026-08-28T20:55:14.893Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "123123",
+        "cipher": "obSBykmj4CWuv3Nf4DLF7XYFgHHNgUYApsLIZ9epbfJ4kM5TVcLjFGQ5a6+z1ik0VLo3t7iz811QJUImQkQKDmf89D2geiE5SNHSbq/EIjXkuW7uwtMLP2BlN4JFmU9T2A=="
+      }
     }
   }
 }
