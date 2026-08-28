@@ -717,6 +717,10 @@
       });
     }
 
+    function formatEndpointDates(createdAt, updatedAt) {
+      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}`;
+    }
+
     async function loadEndpointsMeta() {
       try {
         const { branch } = getConfig();
@@ -1163,7 +1167,7 @@
           <div>
             <div class="endpoint-name">${ep.name}</div>
             <div class="endpoint-preview">${ep.customerName}（${ep.customerId}）</div>
-            <div class="endpoint-date">生成：${formatDate(ep.createdAt)}</div>
+            <div class="endpoint-date">${formatEndpointDates(ep.createdAt, ep.updatedAt)}</div>
           </div>
           <div class="endpoint-actions">
             <button class="btn btn-ghost btn-edit" data-customer-id="${ep.customerId}" data-name="${ep.name}">编辑</button>
@@ -1176,13 +1180,14 @@
       bindEndpointEvents();
     }
 
-    function upsertEndpointInList(customerId, name, createdAt) {
+    function upsertEndpointInList(customerId, name, createdAt, updatedAt) {
       const list = $('#endpoint-list');
       const key = endpointKey(customerId, name);
       const existing = list.querySelector(`[data-key="${CSS.escape(key)}"]`);
+      const dateText = formatEndpointDates(createdAt, updatedAt);
       if (existing) {
         const dateEl = existing.querySelector('.endpoint-date');
-        if (dateEl) dateEl.textContent = `生成：${formatDate(createdAt)}`;
+        if (dateEl) dateEl.textContent = dateText;
         return;
       }
 
@@ -1197,7 +1202,7 @@
         <div>
           <div class="endpoint-name">${name}</div>
           <div class="endpoint-preview">${customer ? customer.name : customerId}（${customerId}）</div>
-          <div class="endpoint-date">生成：${formatDate(createdAt)}</div>
+          <div class="endpoint-date">${dateText}</div>
         </div>
         <div class="endpoint-actions">
           <button class="btn btn-ghost btn-edit" data-customer-id="${customerId}" data-name="${name}">编辑</button>
@@ -1222,21 +1227,26 @@
             for (const f of items.filter((x) => x.type === 'dir')) {
               const key = endpointKey(c.id, f.name);
               let createdAt = endpointsMeta[key]?.createdAt;
+              let updatedAt = endpointsMeta[key]?.updatedAt;
               if (!createdAt) {
                 createdAt = await backfillEndpointDate(c.id, f.name);
-                if (createdAt) metaChanged = true;
+                if (createdAt) {
+                  updatedAt = endpointsMeta[key]?.updatedAt || createdAt;
+                  metaChanged = true;
+                }
               }
               endpoints.push({
                 customerId: c.id,
                 customerName: c.name,
                 name: f.name,
                 createdAt,
+                updatedAt: updatedAt || createdAt,
               });
             }
           } catch {}
         }
         if (metaChanged) await saveEndpointsMeta();
-        endpoints.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        endpoints.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
         renderEndpointList(endpoints);
         return endpoints.map((ep) => endpointKey(ep.customerId, ep.name));
       } catch (e) {
@@ -1304,8 +1314,8 @@
       try {
         await deployEndpoint(customerId, deployName, content);
         const metaKey = endpointKey(customerId, deployName);
-        const createdAt = endpointsMeta[metaKey]?.createdAt || new Date().toISOString();
-        upsertEndpointInList(customerId, deployName, createdAt);
+        const meta = endpointsMeta[metaKey] || {};
+        upsertEndpointInList(customerId, deployName, meta.createdAt, meta.updatedAt);
         const { user, repo } = getConfig();
         const url = pageUrl(user, repo, customerId, deployName);
         $('#result-url').textContent = url;
