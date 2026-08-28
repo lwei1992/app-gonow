@@ -2,12 +2,12 @@
   "endpoints": {
     "51928374/nimama": {
       "createdAt": "2026-08-28T19:35:13Z",
-      "updatedAt": "2026-08-28T20:49:21.112Z",
+      "updatedAt": "2026-08-28T20:50:01.187Z",
       "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "123123",
-        "cipher": "UWcPsfVt88HDGesg73d7VNwEM5AU299zTIUQBIezVKsPR01Ovn+SujLMWsI0Xny/8+d+eZ6yCaGmIBMidatHEv0dhFEz9Dpx/wPFxiEWweY4fxAYAS3aRffHBbm8AAjW"
+        "cipher": "c7lDVE+TPPh2PX7Uye1TWz3IWQO4q+x3O+xDs99SOLvDG2wmE6pmmexTSeAqJKI6pcAynGJip5FqJmUMkeDEnr/ICxh/zeIK+pSlKfF/6ft20+VQEt1+jiLaMffvaIwI"
       }
     }
   }
