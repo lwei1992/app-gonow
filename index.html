@@ -546,11 +546,6 @@
         <textarea id="ep-content" placeholder="juxsne~0~https://www.baidu.com/"></textarea>
         <p class="hint">页面将仅输出此内容，不包含任何 HTML 标签或其他文字</p>
       </div>
-      <div class="field">
-        <label for="ep-code">修改码</label>
-        <input type="text" id="ep-code" placeholder="更新已有项目时必填" autocomplete="off">
-        <p class="hint">修改已有项目内容时需填写对应客户的修改码</p>
-      </div>
       <label class="checkbox-field" for="ep-duplicate">
         <input type="checkbox" id="ep-duplicate">
         <span>同名字项目</span>
@@ -627,7 +622,6 @@
       content: $('#ep-content'),
       duplicate: $('#ep-duplicate'),
       customer: $('#ep-customer'),
-      code: $('#ep-code'),
     };
 
     const STORAGE_KEY = 'api-gen-config';
@@ -1121,9 +1115,8 @@
             fields.customer.value = customerId;
             fields.name.value = name;
             fields.content.value = text;
-            fields.code.value = '';
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            toast('已加载到编辑区，更新时需填写修改码');
+            toast('已加载到编辑区');
           } catch (e) {
             toast(e.message, 'error');
           }
@@ -1278,7 +1271,6 @@
       const baseName = fields.name.value.trim();
       const content = fields.content.value;
       const allowDuplicate = fields.duplicate.checked;
-      const inputCode = fields.code.value.trim();
 
       if (!customerId) return toast('请选择归属客户', 'error');
       if (!baseName) return toast('请填写名字', 'error');
@@ -1304,11 +1296,6 @@
         isUpdate = !allowDuplicate && existingNames.has(baseName);
       } catch (e) {
         return toast(e.message, 'error');
-      }
-
-      if (isUpdate) {
-        if (!inputCode) return toast('更新已有项目需填写修改码', 'error');
-        if (inputCode !== customer.code) return toast('修改码不正确', 'error');
       }
 
       btn.disabled = true;
