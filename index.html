@@ -91,6 +91,16 @@
       margin-bottom: 0;
     }
 
+    .list-search-box {
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .list-search-box input {
+      padding: 8px 12px;
+      font-size: 0.875rem;
+    }
+
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -637,6 +647,9 @@
           <h2>已有接口</h2>
           <button class="btn btn-ghost" id="btn-refresh-list">刷新</button>
         </div>
+        <div class="list-search-box">
+          <input type="text" id="ep-search" placeholder="搜索项目名、客户名或客户ID…" autocomplete="off">
+        </div>
         <ul class="endpoint-list" id="endpoint-list">
           <li class="empty-state">加载中…</li>
         </ul>
@@ -765,6 +778,7 @@
 
     let customers = [];
     let endpointsMeta = {};
+    let allEndpoints = [];
     let baseDomain = DEFAULT_BASE_DOMAIN;
 
     const DEFAULT_CONFIG = {
@@ -1440,7 +1454,8 @@
     function renderEndpointList(endpoints) {
       const list = $('#endpoint-list');
       if (endpoints.length === 0) {
-        list.innerHTML = '<li class="empty-state">暂无接口，请先生成一个</li>';
+        const q = $('#ep-search')?.value.trim();
+        list.innerHTML = `<li class="empty-state">${q ? '暂无匹配接口' : '暂无接口，请先生成一个'}</li>`;
         return;
       }
 
@@ -1462,38 +1477,37 @@
       bindEndpointEvents();
     }
 
+    function filterEndpointList() {
+      const q = $('#ep-search').value.trim().toLowerCase();
+      const filtered = q
+        ? allEndpoints.filter((ep) =>
+            ep.name.toLowerCase().includes(q) ||
+            ep.customerId.includes(q) ||
+            ep.customerName.toLowerCase().includes(q)
+          )
+        : allEndpoints;
+      renderEndpointList(filtered);
+    }
+
     function upsertEndpointInList(customerId, name, createdAt, updatedAt, updatedBy) {
-      const list = $('#endpoint-list');
       const key = endpointKey(customerId, name);
-      const existing = list.querySelector(`[data-key="${CSS.escape(key)}"]`);
-      const dateText = formatEndpointDates(createdAt, updatedAt, updatedBy);
-      if (existing) {
-        const dateEl = existing.querySelector('.endpoint-date');
-        if (dateEl) dateEl.textContent = dateText;
-        return;
-      }
-
-      const empty = list.querySelector('.empty-state');
-      if (empty) empty.remove();
-
       const customer = getCustomerById(customerId);
-      const li = document.createElement('li');
-      li.className = 'endpoint-item';
-      li.dataset.key = key;
-      li.innerHTML = `
-        <div>
-          <div class="endpoint-name">${name}</div>
-          <div class="endpoint-preview">${customer ? customer.name : customerId}（${customerId}）</div>
-          <div class="endpoint-date">${dateText}</div>
-        </div>
-        <div class="endpoint-actions">
-          <button class="btn btn-ghost btn-edit" data-customer-id="${customerId}" data-name="${name}">编辑</button>
-          <button class="btn btn-ghost btn-copy-ep" data-customer-id="${customerId}" data-name="${name}">复制</button>
-          <button class="btn btn-danger btn-del" data-customer-id="${customerId}" data-name="${name}">删除</button>
-        </div>
-      `;
-      list.prepend(li);
-      bindEndpointEvents();
+      const ep = {
+        customerId,
+        customerName: customer ? customer.name : customerId,
+        name,
+        createdAt,
+        updatedAt,
+        updatedBy,
+      };
+      const idx = allEndpoints.findIndex((item) => endpointKey(item.customerId, item.name) === key);
+      if (idx >= 0) {
+        allEndpoints[idx] = { ...allEndpoints[idx], ...ep };
+      } else {
+        allEndpoints.unshift(ep);
+        allEndpoints.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+      }
+      filterEndpointList();
     }
 
     async function listEndpoints() {
@@ -1541,7 +1555,8 @@
         }
         if (metaChanged) await saveEndpointsMeta();
         endpoints.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
-        renderEndpointList(endpoints);
+        allEndpoints = endpoints;
+        filterEndpointList();
         return endpoints.map((ep) => endpointKey(ep.customerId, ep.name));
       } catch (e) {
         list.innerHTML = `<li class="empty-state">${e.message}</li>`;
@@ -1652,6 +1667,7 @@
         btn.textContent = '刷新';
       }
     });
+    $('#ep-search').addEventListener('input', filterEndpointList);
     $('#btn-save-customers').addEventListener('click', async () => {
       const btn = $('#btn-save-customers');
       btn.disabled = true;
