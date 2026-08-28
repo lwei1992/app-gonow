@@ -380,7 +380,7 @@
       <div class="field">
         <label for="ep-name">名字</label>
         <input type="text" id="ep-name" placeholder="Gmengtx" autocomplete="off">
-        <p class="hint">将作为文件名，访问地址为 /名字</p>
+        <p class="hint">将作为路径名，访问地址为 /名字/</p>
       </div>
       <div class="field">
         <label for="ep-content">显示内容</label>
@@ -489,8 +489,16 @@
       return { user, repo, branch, token };
     }
 
+    function endpointPath(name) {
+      return `${name}/index.html`;
+    }
+
     function pageUrl(user, repo, name) {
       return `https://${user}.github.io/${repo}/${name}`;
+    }
+
+    function contentsApiPath(filePath) {
+      return `/contents/${filePath.split('/').map(encodeURIComponent).join('/')}`;
     }
 
     async function ghFetch(path, options = {}) {
@@ -515,7 +523,7 @@
     async function getFileSha(filename) {
       try {
         const { branch } = getConfig();
-        const data = await ghFetch(`/contents/${encodeURIComponent(filename)}?ref=${branch}`);
+        const data = await ghFetch(`${contentsApiPath(filename)}?ref=${branch}`);
         return data.sha;
       } catch {
         return null;
@@ -531,7 +539,7 @@
         branch,
       };
       if (sha) body.sha = sha;
-      await ghFetch(`/contents/${encodeURIComponent(filename)}`, {
+      await ghFetch(contentsApiPath(filename), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -639,28 +647,41 @@
     }
 
     async function deployEndpoint(name, content) {
-      const { branch } = getConfig();
-      const sha = await getFileSha(name);
+      const path = endpointPath(name);
+      const sha = await getFileSha(path);
       const body = {
         message: sha ? `Update endpoint ${name}` : `Create endpoint ${name}`,
         content: btoa(unescape(encodeURIComponent(content))),
-        branch,
+        branch: getConfig().branch,
       };
       if (sha) body.sha = sha;
-      await ghFetch(`/contents/${encodeURIComponent(name)}`, {
+      await ghFetch(contentsApiPath(path), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      // 清理旧版无扩展名文件（会触发下载）
+      const oldSha = await getFileSha(name);
+      if (oldSha) {
+        await ghFetch(contentsApiPath(name), {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Remove legacy endpoint ${name}`,
+            sha: oldSha,
+            branch: getConfig().branch,
+          }),
+        });
+      }
     }
 
-    async function deleteEndpoint(name, sha) {
+    async function deleteEndpoint(filePath, sha) {
       const { branch } = getConfig();
-      await ghFetch(`/contents/${encodeURIComponent(name)}`, {
+      await ghFetch(contentsApiPath(filePath), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `Delete endpoint ${name}`,
+          message: `Delete endpoint ${filePath}`,
           sha,
           branch,
         }),
@@ -671,9 +692,9 @@
       const list = $('#endpoint-list');
       try {
         const { branch } = getConfig();
-        const files = await ghFetch(`/contents/?ref=${branch}`);
-        const endpoints = files.filter(
-          (f) => f.type === 'file' && f.name !== 'index.html' && !f.name.startsWith('.')
+        const items = await ghFetch(`/contents/?ref=${branch}`);
+        const endpoints = items.filter(
+          (f) => f.type === 'dir' && !f.name.startsWith('.')
         );
 
         if (endpoints.length === 0) {
@@ -682,7 +703,7 @@
         }
 
         list.innerHTML = endpoints.map((f) => `
-          <li class="endpoint-item" data-name="${f.name}" data-sha="${f.sha}">
+          <li class="endpoint-item" data-name="${f.name}">
             <div>
               <div class="endpoint-name">${f.name}</div>
               <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
@@ -690,7 +711,7 @@
             <div class="endpoint-actions">
               <button class="btn btn-ghost btn-edit" data-name="${f.name}">编辑</button>
               <button class="btn btn-ghost btn-copy-ep" data-name="${f.name}">复制</button>
-              <button class="btn btn-danger btn-del" data-name="${f.name}" data-sha="${f.sha}">删除</button>
+              <button class="btn btn-danger btn-del" data-name="${f.name}">删除</button>
             </div>
           </li>
         `).join('');
@@ -700,7 +721,7 @@
             const name = btn.dataset.name;
             try {
               const { branch } = getConfig();
-              const data = await ghFetch(`/contents/${encodeURIComponent(name)}?ref=${branch}`);
+              const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
               const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
               fields.name.value = name;
               fields.content.value = text;
@@ -725,7 +746,9 @@
             if (!confirm(`确定删除接口「${name}」？`)) return;
             try {
               btn.disabled = true;
-              await deleteEndpoint(name, btn.dataset.sha);
+              const { branch } = getConfig();
+              const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
+              await deleteEndpoint(endpointPath(name), data.sha);
               toast('已删除', 'success');
               await refreshList();
             } catch (e) {
