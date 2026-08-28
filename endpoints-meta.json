@@ -2,12 +2,12 @@
   "endpoints": {
     "51928374/Nilenzs": {
       "createdAt": "2026-08-28T21:03:43.185Z",
-      "updatedAt": "2026-08-28T21:03:43.185Z",
+      "updatedAt": "2026-08-28T21:12:08.167Z",
       "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
-        "key": "com.noiiyatech.Nilenzs",
-        "cipher": "jjqOMcnz97LQIQ+VSLGnRjuhyWt2vBacI+qDRqq2k73K4EqP4CMvX2EJzGV7CWUFSwOoBiBRWGzKoCQwG9+trqxnN6rBJmxY5mzFcZtA62zSBQ3XOV7fC9qy62Jhb9yaMQ=="
+        "key": "Nilenzs",
+        "cipher": "+xN6fDHfAiniPLVpWU9xfs9V1r+Cu8wYpBTNX5vg85gSxFWFMRrxfxtpvRMkJf8QOHMpbczrkP6GI6YZvno8eCCvwZY8eiZKFsr8DscdE4S2BHjVuavbvc2eTbRytpwOlQ=="
       }
     }
   }
