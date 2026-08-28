@@ -1154,10 +1154,21 @@
 
     async function getPortalTemplate() {
       if (portalTemplateCache) return portalTemplateCache;
-      const res = await fetch('portal-template.html');
-      if (!res.ok) throw new Error('无法加载 portal-template.html');
-      portalTemplateCache = await res.text();
-      return portalTemplateCache;
+      try {
+        const { branch } = getConfig();
+        const data = await ghFetch(`${contentsApiPath('portal-template.html')}?ref=${branch}`);
+        portalTemplateCache = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        return portalTemplateCache;
+      } catch (apiErr) {
+        try {
+          const res = await fetch('portal-template.html');
+          if (res.ok) {
+            portalTemplateCache = await res.text();
+            return portalTemplateCache;
+          }
+        } catch {}
+        throw new Error(`无法加载 portal-template.html：${apiErr.message}`);
+      }
     }
 
     function obfuscateToken(token) {
@@ -1179,8 +1190,12 @@
 
     async function deployPortalPages(customerList) {
       for (const c of customerList) {
-        const html = await buildPortalPage(c);
-        await uploadFile(`portal/${c.id}/index.html`, html);
+        try {
+          const html = await buildPortalPage(c);
+          await uploadFile(`portal/${c.id}/index.html`, html);
+        } catch (e) {
+          throw new Error(`客户「${c.name}」门户部署失败：${e.message}`);
+        }
       }
     }
 
@@ -1554,7 +1569,7 @@
           } catch {}
         }
         if (metaChanged) await saveEndpointsMeta();
-        endpoints.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+        endpoints.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         allEndpoints = endpoints;
         filterEndpointList();
         return endpoints.map((ep) => endpointKey(ep.customerId, ep.name));
