@@ -271,8 +271,10 @@
       });
     }
 
-    function formatDates(createdAt, updatedAt) {
-      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}`;
+    function formatDates(createdAt, updatedAt, updatedBy) {
+      const who = updatedBy === 'self' ? '自己' : updatedBy === 'customer' ? '客户' : '';
+      const whoText = who ? `　更新人：${who}` : '';
+      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}${whoText}`;
     }
 
     async function loadMeta() {
@@ -315,7 +317,7 @@
           <li class="project-item">
             <div>
               <div class="project-name">${p.name}</div>
-              <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt)}</div>
+              <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt, meta.updatedBy)}</div>
               <div class="project-url">${url}</div>
             </div>
             <div class="project-actions">
@@ -405,9 +407,10 @@
         const key = `${CUSTOMER_ID}/${editingProject}`;
         const now = new Date().toISOString();
         if (!endpointsMeta[key]) {
-          endpointsMeta[key] = { createdAt: now, updatedAt: now };
+          endpointsMeta[key] = { createdAt: now, updatedAt: now, updatedBy: 'customer' };
         } else {
           endpointsMeta[key].updatedAt = now;
+          endpointsMeta[key].updatedBy = 'customer';
         }
         await saveMeta();
         toast('保存成功', 'success');
