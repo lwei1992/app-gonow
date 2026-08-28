@@ -82,7 +82,7 @@
       margin-bottom: 6px;
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       background: var(--surface-2);
       border: 1px solid var(--border);
@@ -95,7 +95,7 @@
       font-family: inherit;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: var(--accent);
     }
 
@@ -302,7 +302,48 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 280px;
+      max-width: 320px;
+    }
+
+    .customer-list { list-style: none; }
+
+    .customer-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .customer-item:last-child { border-bottom: none; }
+
+    .customer-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 90px auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .customer-row input { font-size: 0.85rem; padding: 7px 10px; }
+
+    .customer-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .customer-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .customer-add-form {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 520px) {
+      .customer-row { grid-template-columns: 1fr; }
     }
 
     .endpoint-actions {
@@ -394,18 +435,57 @@
       <div class="config-status" id="config-status"></div>
     </div>
 
+    <!-- 客户列表 -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="margin-bottom:0;">客户列表</h2>
+        <button class="btn btn-ghost" id="btn-save-customers">保存客户</button>
+      </div>
+      <ul class="customer-list" id="customer-list">
+        <li class="empty-state">加载中…</li>
+      </ul>
+      <div class="customer-add-form">
+        <p class="customer-label">新增客户</p>
+        <div class="row">
+          <div class="field">
+            <label for="new-customer-id">客户 ID（留空随机）</label>
+            <input type="text" id="new-customer-id" placeholder="8位数字" maxlength="8" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="new-customer-name">名字</label>
+            <input type="text" id="new-customer-name" placeholder="客户名称" autocomplete="off">
+          </div>
+        </div>
+        <div class="field">
+          <label for="new-customer-code">修改码</label>
+          <input type="text" id="new-customer-code" value="123456" autocomplete="off">
+        </div>
+        <button class="btn btn-secondary" id="btn-add-customer" style="width:100%;">添加客户</button>
+      </div>
+    </div>
+
     <!-- 生成接口 -->
     <div class="card">
       <h2>生成接口</h2>
       <div class="field">
+        <label for="ep-customer">归属客户</label>
+        <select id="ep-customer"></select>
+        <p class="hint">每个项目必须选择归属客户</p>
+      </div>
+      <div class="field">
         <label for="ep-name">名字</label>
-        <input type="text" id="ep-name" placeholder="Gmengtx" autocomplete="off">
-        <p class="hint">将作为路径名，访问地址为 /名字/</p>
+        <input type="text" id="ep-name" placeholder="hahaha" autocomplete="off">
+        <p class="hint">访问地址为 /客户ID/名字/</p>
       </div>
       <div class="field">
         <label for="ep-content">显示内容</label>
         <textarea id="ep-content" placeholder="juxsne~0~https://www.baidu.com/"></textarea>
         <p class="hint">页面将仅输出此内容，不包含任何 HTML 标签或其他文字</p>
+      </div>
+      <div class="field">
+        <label for="ep-code">修改码</label>
+        <input type="text" id="ep-code" placeholder="更新已有项目时必填" autocomplete="off">
+        <p class="hint">修改已有项目内容时需填写对应客户的修改码</p>
       </div>
       <label class="checkbox-field" for="ep-duplicate">
         <input type="checkbox" id="ep-duplicate">
@@ -445,9 +525,20 @@
       name: $('#ep-name'),
       content: $('#ep-content'),
       duplicate: $('#ep-duplicate'),
+      customer: $('#ep-customer'),
+      code: $('#ep-code'),
     };
 
     const STORAGE_KEY = 'api-gen-config';
+    const CUSTOMERS_FILE = 'customers.json';
+
+    const DEFAULT_CUSTOMERS = [
+      { id: '88214563', name: '旧老板', code: '123456' },
+      { id: '73649281', name: '贷款包老板', code: '123456' },
+      { id: '51928374', name: '自备号老板', code: '123456' },
+    ];
+
+    let customers = [];
 
     const DEFAULT_CONFIG = {
       user: 'lwei1992',
@@ -521,12 +612,123 @@
       return { user, repo, branch, token };
     }
 
-    function endpointPath(name) {
-      return `${name}/index.html`;
+    function endpointPath(customerId, name) {
+      return `${customerId}/${name}/index.html`;
     }
 
-    function pageUrl(user, repo, name) {
-      return `https://${user}.github.io/${repo}/${name}`;
+    function pageUrl(user, repo, customerId, name) {
+      return `https://${user}.github.io/${repo}/${customerId}/${name}`;
+    }
+
+    function endpointKey(customerId, name) {
+      return `${customerId}/${name}`;
+    }
+
+    function getCustomerById(id) {
+      return customers.find((c) => c.id === id);
+    }
+
+    function generateCustomerId() {
+      let id;
+      do {
+        id = String(Math.floor(10000000 + Math.random() * 90000000));
+      } while (customers.some((c) => c.id === id));
+      return id;
+    }
+
+    function renderCustomerSelect() {
+      const sel = fields.customer;
+      if (customers.length === 0) {
+        sel.innerHTML = '<option value="">请先添加客户</option>';
+        return;
+      }
+      sel.innerHTML = customers.map((c) =>
+        `<option value="${c.id}">${c.name}（${c.id}）</option>`
+      ).join('');
+    }
+
+    function renderCustomerList() {
+      const list = $('#customer-list');
+      if (customers.length === 0) {
+        list.innerHTML = '<li class="empty-state">暂无客户，请添加</li>';
+        return;
+      }
+      list.innerHTML = customers.map((c, i) => `
+        <li class="customer-item" data-index="${i}">
+          <div class="customer-row">
+            <div>
+              <div class="customer-label">客户 ID</div>
+              <input type="text" class="cust-id" value="${c.id}" maxlength="8">
+            </div>
+            <div>
+              <div class="customer-label">名字</div>
+              <input type="text" class="cust-name" value="${c.name}">
+            </div>
+            <div>
+              <div class="customer-label">修改码</div>
+              <input type="text" class="cust-code" value="${c.code}">
+            </div>
+            <div class="endpoint-actions" style="align-self:end;">
+              <button class="btn btn-danger btn-del-customer" data-index="${i}">删除</button>
+            </div>
+          </div>
+        </li>
+      `).join('');
+
+      list.querySelectorAll('.btn-del-customer').forEach((btn) => {
+        btn.onclick = () => {
+          const idx = Number(btn.dataset.index);
+          const c = customers[idx];
+          if (!confirm(`确定删除客户「${c.name}」？`)) return;
+          customers.splice(idx, 1);
+          renderCustomerList();
+          renderCustomerSelect();
+        };
+      });
+    }
+
+    function collectCustomersFromUI() {
+      const items = $('#customer-list').querySelectorAll('.customer-item');
+      return Array.from(items).map((item) => ({
+        id: item.querySelector('.cust-id').value.trim(),
+        name: item.querySelector('.cust-name').value.trim(),
+        code: item.querySelector('.cust-code').value.trim() || '123456',
+      }));
+    }
+
+    function validateCustomers(list) {
+      const ids = new Set();
+      for (const c of list) {
+        if (!/^\d{8}$/.test(c.id)) throw new Error(`客户 ID「${c.id || '(空)'}」必须是8位数字`);
+        if (!c.name) throw new Error('客户名字不能为空');
+        if (ids.has(c.id)) throw new Error(`客户 ID「${c.id}」重复`);
+        ids.add(c.id);
+      }
+    }
+
+    async function loadCustomers() {
+      try {
+        const { branch } = getConfig();
+        const data = await ghFetch(`${contentsApiPath(CUSTOMERS_FILE)}?ref=${branch}`);
+        const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        customers = JSON.parse(text).customers || [...DEFAULT_CUSTOMERS];
+      } catch {
+        customers = DEFAULT_CUSTOMERS.map((c) => ({ ...c }));
+        try {
+          await uploadFile(CUSTOMERS_FILE, JSON.stringify({ customers }, null, 2));
+        } catch {}
+      }
+      renderCustomerList();
+      renderCustomerSelect();
+    }
+
+    async function saveCustomers() {
+      const list = collectCustomersFromUI();
+      validateCustomers(list);
+      customers = list;
+      await uploadFile(CUSTOMERS_FILE, JSON.stringify({ customers }, null, 2));
+      renderCustomerList();
+      renderCustomerSelect();
     }
 
     function contentsApiPath(filePath) {
@@ -686,11 +888,11 @@
       reader.readAsText(file);
     }
 
-    async function deployEndpoint(name, content) {
-      const path = endpointPath(name);
+    async function deployEndpoint(customerId, name, content) {
+      const path = endpointPath(customerId, name);
       const sha = await getFileSha(path);
       const body = {
-        message: sha ? `Update endpoint ${name}` : `Create endpoint ${name}`,
+        message: sha ? `Update ${customerId}/${name}` : `Create ${customerId}/${name}`,
         content: btoa(unescape(encodeURIComponent(content))),
         branch: getConfig().branch,
       };
@@ -700,29 +902,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      // 清理旧版无扩展名文件（会触发下载）
-      try {
-        const oldSha = await getFileSha(name);
-        if (oldSha) {
-          await ghFetch(contentsApiPath(name), {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: `Remove legacy endpoint ${name}`,
-              sha: oldSha,
-              branch: getConfig().branch,
-            }),
-          });
-        }
-      } catch {}
     }
 
-    async function getExistingEndpointNames() {
+    async function getExistingEndpointNames(customerId) {
       const { branch } = getConfig();
-      const items = await ghFetch(`/contents/?ref=${branch}`);
-      return new Set(
-        items.filter((f) => f.type === 'dir' && !f.name.startsWith('.')).map((f) => f.name)
-      );
+      try {
+        const items = await ghFetch(`/contents/${encodeURIComponent(customerId)}?ref=${branch}`);
+        return new Set(
+          items.filter((f) => f.type === 'dir').map((f) => f.name)
+        );
+      } catch {
+        return new Set();
+      }
     }
 
     function resolveDeployName(baseName, existingNames, allowDuplicate) {
@@ -754,15 +945,18 @@
 
       list.querySelectorAll('.btn-edit').forEach((btn) => {
         btn.onclick = async () => {
+          const customerId = btn.dataset.customerId;
           const name = btn.dataset.name;
           try {
             const { branch } = getConfig();
-            const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
+            const data = await ghFetch(`${contentsApiPath(endpointPath(customerId, name))}?ref=${branch}`);
             const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+            fields.customer.value = customerId;
             fields.name.value = name;
             fields.content.value = text;
+            fields.code.value = '';
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            toast('已加载到编辑区');
+            toast('已加载到编辑区，更新时需填写修改码');
           } catch (e) {
             toast(e.message, 'error');
           }
@@ -772,19 +966,20 @@
       list.querySelectorAll('.btn-copy-ep').forEach((btn) => {
         btn.onclick = () => {
           const { user, repo } = getConfig();
-          copyText(pageUrl(user, repo, btn.dataset.name));
+          copyText(pageUrl(user, repo, btn.dataset.customerId, btn.dataset.name));
         };
       });
 
       list.querySelectorAll('.btn-del').forEach((btn) => {
         btn.onclick = async () => {
+          const customerId = btn.dataset.customerId;
           const name = btn.dataset.name;
           if (!confirm(`确定删除接口「${name}」？`)) return;
           try {
             btn.disabled = true;
             const { branch } = getConfig();
-            const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
-            await deleteEndpoint(endpointPath(name), data.sha);
+            const data = await ghFetch(`${contentsApiPath(endpointPath(customerId, name))}?ref=${branch}`);
+            await deleteEndpoint(endpointPath(customerId, name), data.sha);
             toast('已删除', 'success');
             await refreshList();
           } catch (e) {
@@ -802,16 +997,16 @@
         return;
       }
 
-      list.innerHTML = endpoints.map((f) => `
-        <li class="endpoint-item" data-name="${f.name}">
+      list.innerHTML = endpoints.map((ep) => `
+        <li class="endpoint-item" data-key="${endpointKey(ep.customerId, ep.name)}">
           <div>
-            <div class="endpoint-name">${f.name}</div>
-            <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
+            <div class="endpoint-name">${ep.name}</div>
+            <div class="endpoint-preview">${ep.customerName}（${ep.customerId}）</div>
           </div>
           <div class="endpoint-actions">
-            <button class="btn btn-ghost btn-edit" data-name="${f.name}">编辑</button>
-            <button class="btn btn-ghost btn-copy-ep" data-name="${f.name}">复制</button>
-            <button class="btn btn-danger btn-del" data-name="${f.name}">删除</button>
+            <button class="btn btn-ghost btn-edit" data-customer-id="${ep.customerId}" data-name="${ep.name}">编辑</button>
+            <button class="btn btn-ghost btn-copy-ep" data-customer-id="${ep.customerId}" data-name="${ep.name}">复制</button>
+            <button class="btn btn-danger btn-del" data-customer-id="${ep.customerId}" data-name="${ep.name}">删除</button>
           </div>
         </li>
       `).join('');
@@ -819,25 +1014,27 @@
       bindEndpointEvents();
     }
 
-    function upsertEndpointInList(name) {
+    function upsertEndpointInList(customerId, name) {
       const list = $('#endpoint-list');
-      if (list.querySelector(`[data-name="${CSS.escape(name)}"]`)) return;
+      const key = endpointKey(customerId, name);
+      if (list.querySelector(`[data-key="${CSS.escape(key)}"]`)) return;
 
       const empty = list.querySelector('.empty-state');
       if (empty) empty.remove();
 
+      const customer = getCustomerById(customerId);
       const li = document.createElement('li');
       li.className = 'endpoint-item';
-      li.dataset.name = name;
+      li.dataset.key = key;
       li.innerHTML = `
         <div>
           <div class="endpoint-name">${name}</div>
-          <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
+          <div class="endpoint-preview">${customer ? customer.name : customerId}（${customerId}）</div>
         </div>
         <div class="endpoint-actions">
-          <button class="btn btn-ghost btn-edit" data-name="${name}">编辑</button>
-          <button class="btn btn-ghost btn-copy-ep" data-name="${name}">复制</button>
-          <button class="btn btn-danger btn-del" data-name="${name}">删除</button>
+          <button class="btn btn-ghost btn-edit" data-customer-id="${customerId}" data-name="${name}">编辑</button>
+          <button class="btn btn-ghost btn-copy-ep" data-customer-id="${customerId}" data-name="${name}">复制</button>
+          <button class="btn btn-danger btn-del" data-customer-id="${customerId}" data-name="${name}">删除</button>
         </div>
       `;
       list.prepend(li);
@@ -848,12 +1045,17 @@
       const list = $('#endpoint-list');
       try {
         const { branch } = getConfig();
-        const items = await ghFetch(`/contents/?ref=${branch}`);
-        const endpoints = items.filter(
-          (f) => f.type === 'dir' && !f.name.startsWith('.')
-        );
+        const endpoints = [];
+        for (const c of customers) {
+          try {
+            const items = await ghFetch(`/contents/${encodeURIComponent(c.id)}?ref=${branch}`);
+            for (const f of items.filter((x) => x.type === 'dir')) {
+              endpoints.push({ customerId: c.id, customerName: c.name, name: f.name });
+            }
+          } catch {}
+        }
         renderEndpointList(endpoints);
-        return endpoints.map((f) => f.name);
+        return endpoints.map((ep) => endpointKey(ep.customerId, ep.name));
       } catch (e) {
         list.innerHTML = `<li class="empty-state">${e.message}</li>`;
         throw e;
@@ -867,12 +1069,12 @@
       );
     }
 
-    async function refreshList(expectedName = null) {
-      const retries = expectedName ? 4 : 1;
+    async function refreshList(expectedKey = null) {
+      const retries = expectedKey ? 4 : 1;
       for (let i = 0; i < retries; i++) {
         try {
-          const names = await listEndpoints();
-          if (!expectedName || names.includes(expectedName)) return;
+          const keys = await listEndpoints();
+          if (!expectedKey || keys.includes(expectedKey)) return;
         } catch {
           if (i === retries - 1) throw new Error('刷新列表失败');
         }
@@ -882,14 +1084,20 @@
 
     $('#btn-generate').addEventListener('click', async () => {
       const btn = $('#btn-generate');
+      const customerId = fields.customer.value;
       const baseName = fields.name.value.trim();
       const content = fields.content.value;
       const allowDuplicate = fields.duplicate.checked;
+      const inputCode = fields.code.value.trim();
 
+      if (!customerId) return toast('请选择归属客户', 'error');
       if (!baseName) return toast('请填写名字', 'error');
       if (!/^[a-zA-Z0-9_\-.]+$/.test(baseName)) {
         return toast('名字只能包含字母、数字、下划线、连字符和点', 'error');
       }
+
+      const customer = getCustomerById(customerId);
+      if (!customer) return toast('所选客户不存在', 'error');
 
       try {
         getConfig();
@@ -897,18 +1105,30 @@
         return toast(e.message, 'error');
       }
 
+      let existingNames;
+      let deployName;
+      let isUpdate;
+      try {
+        existingNames = await getExistingEndpointNames(customerId);
+        deployName = resolveDeployName(baseName, existingNames, allowDuplicate);
+        isUpdate = !allowDuplicate && existingNames.has(baseName);
+      } catch (e) {
+        return toast(e.message, 'error');
+      }
+
+      if (isUpdate) {
+        if (!inputCode) return toast('更新已有项目需填写修改码', 'error');
+        if (inputCode !== customer.code) return toast('修改码不正确', 'error');
+      }
+
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> 部署中…';
 
       try {
-        const existingNames = await getExistingEndpointNames();
-        const deployName = resolveDeployName(baseName, existingNames, allowDuplicate);
-        const isUpdate = !allowDuplicate && existingNames.has(baseName);
-
-        await deployEndpoint(deployName, content);
-        upsertEndpointInList(deployName);
+        await deployEndpoint(customerId, deployName, content);
+        upsertEndpointInList(customerId, deployName);
         const { user, repo } = getConfig();
-        const url = pageUrl(user, repo, deployName);
+        const url = pageUrl(user, repo, customerId, deployName);
         $('#result-url').textContent = url;
         $('#result-box').classList.add('visible');
 
@@ -919,7 +1139,7 @@
         } else {
           toast('部署成功！约 1 分钟后生效', 'success');
         }
-        refreshList(deployName).catch(() => {});
+        refreshList(endpointKey(customerId, deployName)).catch(() => {});
       } catch (e) {
         toast(e.message, 'error');
       } finally {
@@ -949,6 +1169,38 @@
         btn.textContent = '刷新';
       }
     });
+    $('#btn-save-customers').addEventListener('click', async () => {
+      const btn = $('#btn-save-customers');
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      try {
+        getConfig();
+        await saveCustomers();
+        toast('客户列表已保存', 'success');
+      } catch (e) {
+        toast(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存客户';
+      }
+    });
+    $('#btn-add-customer').addEventListener('click', async () => {
+      const idInput = $('#new-customer-id').value.trim();
+      const name = $('#new-customer-name').value.trim();
+      const code = $('#new-customer-code').value.trim() || '123456';
+      if (!name) return toast('请填写客户名字', 'error');
+      const id = idInput || generateCustomerId();
+      if (!/^\d{8}$/.test(id)) return toast('客户 ID 必须是8位数字', 'error');
+      if (customers.some((c) => c.id === id)) return toast('客户 ID 已存在', 'error');
+      customers.push({ id, name, code });
+      $('#new-customer-id').value = '';
+      $('#new-customer-name').value = '';
+      $('#new-customer-code').value = '123456';
+      renderCustomerList();
+      renderCustomerSelect();
+      fields.customer.value = id;
+      toast('已添加，记得点击「保存客户」同步到 GitHub', 'success');
+    });
     $('#btn-import').addEventListener('click', () => $('#import-file').click());
     $('#import-file').addEventListener('change', (e) => {
       if (e.target.files[0]) importConfig(e.target.files[0]);
@@ -956,11 +1208,20 @@
     });
 
     loadConfig();
-    if (fields.user.value && fields.repo.value && fields.token.value) {
-      refreshList();
-    } else {
-      $('#endpoint-list').innerHTML = '<li class="empty-state">请先完成 GitHub 配置</li>';
+    async function initApp() {
+      if (!fields.user.value || !fields.repo.value || !fields.token.value) {
+        $('#endpoint-list').innerHTML = '<li class="empty-state">请先完成 GitHub 配置</li>';
+        $('#customer-list').innerHTML = '<li class="empty-state">请先完成 GitHub 配置</li>';
+        return;
+      }
+      try {
+        await loadCustomers();
+        await refreshList();
+      } catch (e) {
+        $('#endpoint-list').innerHTML = `<li class="empty-state">${e.message}</li>`;
+      }
     }
+    initApp();
   </script>
 </body>
 </html>
