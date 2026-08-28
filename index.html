@@ -917,7 +917,11 @@
       const token = fields.token.value.trim();
       if (!token) return;
       const content = `window.PORTAL_CONFIG = {\n  token: '${token}',\n};\n`;
-      await uploadFile('portal-config.js', content);
+      try {
+        await uploadFile('portal-config.js', content);
+      } catch {
+        console.warn('portal-config.js 上传失败，请手动配置 Token');
+      }
     }
 
     async function deployPortalPages(customerList) {
