@@ -742,8 +742,10 @@
       });
     }
 
-    function formatEndpointDates(createdAt, updatedAt) {
-      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}`;
+    function formatEndpointDates(createdAt, updatedAt, updatedBy) {
+      const who = updatedBy === 'self' ? '自己' : updatedBy === 'customer' ? '客户' : '';
+      const whoText = who ? `　更新人：${who}` : '';
+      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}${whoText}`;
     }
 
     async function loadEndpointsMeta() {
@@ -765,9 +767,10 @@
       const key = endpointKey(customerId, name);
       const now = new Date().toISOString();
       if (isNew || !endpointsMeta[key]) {
-        endpointsMeta[key] = { createdAt: now, updatedAt: now };
+        endpointsMeta[key] = { createdAt: now, updatedAt: now, updatedBy: 'self' };
       } else {
         endpointsMeta[key].updatedAt = now;
+        endpointsMeta[key].updatedBy = 'self';
       }
       await saveEndpointsMeta();
     }
@@ -1256,7 +1259,7 @@
           <div>
             <div class="endpoint-name">${ep.name}</div>
             <div class="endpoint-preview">${ep.customerName}（${ep.customerId}）</div>
-            <div class="endpoint-date">${formatEndpointDates(ep.createdAt, ep.updatedAt)}</div>
+            <div class="endpoint-date">${formatEndpointDates(ep.createdAt, ep.updatedAt, ep.updatedBy)}</div>
           </div>
           <div class="endpoint-actions">
             <button class="btn btn-ghost btn-edit" data-customer-id="${ep.customerId}" data-name="${ep.name}">编辑</button>
@@ -1269,11 +1272,11 @@
       bindEndpointEvents();
     }
 
-    function upsertEndpointInList(customerId, name, createdAt, updatedAt) {
+    function upsertEndpointInList(customerId, name, createdAt, updatedAt, updatedBy) {
       const list = $('#endpoint-list');
       const key = endpointKey(customerId, name);
       const existing = list.querySelector(`[data-key="${CSS.escape(key)}"]`);
-      const dateText = formatEndpointDates(createdAt, updatedAt);
+      const dateText = formatEndpointDates(createdAt, updatedAt, updatedBy);
       if (existing) {
         const dateEl = existing.querySelector('.endpoint-date');
         if (dateEl) dateEl.textContent = dateText;
@@ -1317,10 +1320,12 @@
               const key = endpointKey(c.id, f.name);
               let createdAt = endpointsMeta[key]?.createdAt;
               let updatedAt = endpointsMeta[key]?.updatedAt;
+              let updatedBy = endpointsMeta[key]?.updatedBy;
               if (!createdAt) {
                 createdAt = await backfillEndpointDate(c.id, f.name);
                 if (createdAt) {
                   updatedAt = endpointsMeta[key]?.updatedAt || createdAt;
+                  updatedBy = endpointsMeta[key]?.updatedBy;
                   metaChanged = true;
                 }
               }
@@ -1330,6 +1335,7 @@
                 name: f.name,
                 createdAt,
                 updatedAt: updatedAt || createdAt,
+                updatedBy,
               });
             }
           } catch {}
@@ -1404,7 +1410,7 @@
         await deployEndpoint(customerId, deployName, content);
         const metaKey = endpointKey(customerId, deployName);
         const meta = endpointsMeta[metaKey] || {};
-        upsertEndpointInList(customerId, deployName, meta.createdAt, meta.updatedAt);
+        upsertEndpointInList(customerId, deployName, meta.createdAt, meta.updatedAt, meta.updatedBy);
         const { user, repo } = getConfig();
         const url = pageUrl(user, repo, customerId, deployName);
         $('#result-url').textContent = url;
