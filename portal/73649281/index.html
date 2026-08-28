@@ -271,10 +271,8 @@
       });
     }
 
-    function formatDates(createdAt, updatedAt, updatedBy) {
-      const who = updatedBy === 'self' ? '自己' : updatedBy === 'customer' ? '客户' : '';
-      const whoText = who ? `　更新人：${who}` : '';
-      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}${whoText}`;
+    function formatDates(createdAt, updatedAt) {
+      return `生成：${formatDate(createdAt)}　更新：${formatDate(updatedAt || createdAt)}`;
     }
 
     async function loadMeta() {
@@ -317,7 +315,7 @@
           <li class="project-item">
             <div>
               <div class="project-name">${p.name}</div>
-              <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt, meta.updatedBy)}</div>
+              <div class="project-date">${formatDates(meta.createdAt, meta.updatedAt)}</div>
               <div class="project-url">${url}</div>
             </div>
             <div class="project-actions">
