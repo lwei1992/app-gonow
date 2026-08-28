@@ -112,6 +112,26 @@
       margin-top: 5px;
     }
 
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-field input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .checkbox-field span {
+      font-size: 0.9rem;
+    }
+
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -387,6 +407,11 @@
         <textarea id="ep-content" placeholder="juxsne~0~https://www.baidu.com/"></textarea>
         <p class="hint">页面将仅输出此内容，不包含任何 HTML 标签或其他文字</p>
       </div>
+      <label class="checkbox-field" for="ep-duplicate">
+        <input type="checkbox" id="ep-duplicate">
+        <span>同名字项目</span>
+      </label>
+      <p class="hint" style="margin-top: -8px; margin-bottom: 16px;">开启后，同名再次生成会自动创建 _v2、_v3…；关闭则更新已有项目</p>
       <button class="btn btn-primary" id="btn-generate">生成并部署</button>
 
       <div class="result-box" id="result-box">
@@ -416,6 +441,7 @@
       token: $('#gh-token'),
       name: $('#ep-name'),
       content: $('#ep-content'),
+      duplicate: $('#ep-duplicate'),
     };
 
     const STORAGE_KEY = 'api-gen-config';
@@ -434,6 +460,7 @@
         fields.repo.value = saved.repo || DEFAULT_CONFIG.repo;
         fields.branch.value = saved.branch || DEFAULT_CONFIG.branch;
         fields.token.value = saved.token || DEFAULT_CONFIG.token;
+        if (saved.duplicate != null) fields.duplicate.checked = saved.duplicate;
       } catch {
         fields.user.value = DEFAULT_CONFIG.user;
         fields.repo.value = DEFAULT_CONFIG.repo;
@@ -448,6 +475,7 @@
         repo: fields.repo.value.trim(),
         branch: fields.branch.value.trim() || 'main',
         token: fields.token.value.trim(),
+        duplicate: fields.duplicate.checked,
       }));
     }
 
@@ -455,6 +483,7 @@
       fields[key].addEventListener('change', saveConfig);
       fields[key].addEventListener('input', saveConfig);
     });
+    fields.duplicate.addEventListener('change', saveConfig);
 
     $('#toggle-token').addEventListener('click', () => {
       const input = fields.token;
@@ -675,6 +704,25 @@
       }
     }
 
+    async function getExistingEndpointNames() {
+      const { branch } = getConfig();
+      const items = await ghFetch(`/contents/?ref=${branch}`);
+      return new Set(
+        items.filter((f) => f.type === 'dir' && !f.name.startsWith('.')).map((f) => f.name)
+      );
+    }
+
+    function resolveDeployName(baseName, existingNames, allowDuplicate) {
+      if (!allowDuplicate || !existingNames.has(baseName)) {
+        return baseName;
+      }
+      let version = 2;
+      while (existingNames.has(`${baseName}_v${version}`)) {
+        version++;
+      }
+      return `${baseName}_v${version}`;
+    }
+
     async function deleteEndpoint(filePath, sha) {
       const { branch } = getConfig();
       await ghFetch(contentsApiPath(filePath), {
@@ -775,11 +823,12 @@
 
     $('#btn-generate').addEventListener('click', async () => {
       const btn = $('#btn-generate');
-      const name = fields.name.value.trim();
+      const baseName = fields.name.value.trim();
       const content = fields.content.value;
+      const allowDuplicate = fields.duplicate.checked;
 
-      if (!name) return toast('请填写名字', 'error');
-      if (!/^[a-zA-Z0-9_\-.]+$/.test(name)) {
+      if (!baseName) return toast('请填写名字', 'error');
+      if (!/^[a-zA-Z0-9_\-.]+$/.test(baseName)) {
         return toast('名字只能包含字母、数字、下划线、连字符和点', 'error');
       }
 
@@ -793,12 +842,23 @@
       btn.innerHTML = '<span class="spinner"></span> 部署中…';
 
       try {
-        await deployEndpoint(name, content);
+        const existingNames = await getExistingEndpointNames();
+        const deployName = resolveDeployName(baseName, existingNames, allowDuplicate);
+        const isUpdate = !allowDuplicate && existingNames.has(baseName);
+
+        await deployEndpoint(deployName, content);
         const { user, repo } = getConfig();
-        const url = pageUrl(user, repo, name);
+        const url = pageUrl(user, repo, deployName);
         $('#result-url').textContent = url;
         $('#result-box').classList.add('visible');
-        toast('部署成功！约 1 分钟后生效', 'success');
+
+        if (deployName !== baseName) {
+          toast(`已创建新版本：${deployName}`, 'success');
+        } else if (isUpdate) {
+          toast('已更新已有项目', 'success');
+        } else {
+          toast('部署成功！约 1 分钟后生效', 'success');
+        }
         await refreshList();
       } catch (e) {
         toast(e.message, 'error');
