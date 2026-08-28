@@ -199,6 +199,70 @@
       font-size: 0.9rem;
     }
 
+    .encrypt-options {
+      display: none;
+      margin: -8px 0 16px;
+      padding: 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .encrypt-options.visible { display: block; }
+
+    .encrypt-options .field:last-child { margin-bottom: 0; }
+
+    .encrypt-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 1px 7px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      vertical-align: middle;
+      letter-spacing: 0.02em;
+    }
+
+    .endpoint-item {
+      cursor: pointer;
+    }
+
+    .endpoint-item:hover {
+      background: rgba(108, 140, 255, 0.04);
+    }
+
+    .endpoint-main { flex: 1; min-width: 0; }
+
+    .detail-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-row label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-size: 0.875rem;
+      word-break: break-all;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -634,11 +698,35 @@
           <span>同名字项目</span>
         </label>
         <p class="hint" style="margin-top: -8px; margin-bottom: 16px;">开启后，同名再次生成会自动创建 _v2、_v3…；关闭则更新已有项目</p>
+        <label class="checkbox-field" for="ep-encrypt">
+          <input type="checkbox" id="ep-encrypt">
+          <span>加密地址</span>
+        </label>
+        <div class="encrypt-options" id="encrypt-options">
+          <div class="field">
+            <label for="ep-encrypt-key">密钥</label>
+            <input type="text" id="ep-encrypt-key" placeholder="输入加密密钥" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="ep-encrypt-method">加密方式</label>
+            <select id="ep-encrypt-method">
+              <option value="aes-gcm">AES-256-GCM</option>
+              <option value="aes-cbc">AES-256-CBC</option>
+              <option value="aes-ctr">AES-256-CTR</option>
+              <option value="xor-b64">XOR + Base64</option>
+            </select>
+          </div>
+          <p class="hint">生成链接的同时会按所选方式加密完整访问地址</p>
+        </div>
         <button class="btn btn-primary" id="btn-generate">生成并部署</button>
 
         <div class="result-box" id="result-box">
           <div class="result-url" id="result-url"></div>
-          <button class="btn btn-ghost" id="btn-copy">复制链接</button>
+          <div class="result-url" id="result-cipher" style="display:none;color:var(--text-muted);margin-top:8px;"></div>
+          <div class="detail-actions">
+            <button class="btn btn-ghost" id="btn-copy">复制链接</button>
+            <button class="btn btn-ghost" id="btn-copy-cipher" style="display:none;">复制加密串</button>
+          </div>
         </div>
       </div>
 
@@ -658,6 +746,22 @@
   </div>
 
   <div id="toast"></div>
+
+  <!-- 接口详情弹窗 -->
+  <div class="modal-overlay" id="endpoint-detail-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>接口详情</h2>
+        <button class="modal-close" id="btn-close-endpoint-detail" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" id="endpoint-detail-body"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-close-endpoint-detail-2" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
 
   <!-- GitHub 设置弹窗 -->
   <div class="modal-overlay" id="github-modal">
@@ -762,6 +866,16 @@
       content: $('#ep-content'),
       duplicate: $('#ep-duplicate'),
       customer: $('#ep-customer'),
+      encrypt: $('#ep-encrypt'),
+      encryptKey: $('#ep-encrypt-key'),
+      encryptMethod: $('#ep-encrypt-method'),
+    };
+
+    const ENCRYPT_METHOD_LABELS = {
+      'aes-gcm': 'AES-256-GCM',
+      'aes-cbc': 'AES-256-CBC',
+      'aes-ctr': 'AES-256-CTR',
+      'xor-b64': 'XOR + Base64',
     };
 
     const STORAGE_KEY = 'api-gen-config';
@@ -906,7 +1020,7 @@
       await uploadFile(ENDPOINTS_META_FILE, JSON.stringify({ endpoints: endpointsMeta }, null, 2));
     }
 
-    async function recordEndpointMeta(customerId, name, isNew) {
+    async function recordEndpointMeta(customerId, name, isNew, encryptInfo = null) {
       const key = endpointKey(customerId, name);
       const now = new Date().toISOString();
       if (isNew || !endpointsMeta[key]) {
@@ -915,7 +1029,88 @@
         endpointsMeta[key].updatedAt = now;
         endpointsMeta[key].updatedBy = 'self';
       }
+      if (encryptInfo) {
+        endpointsMeta[key].encrypt = encryptInfo;
+      }
       await saveEndpointsMeta();
+    }
+
+    function bytesToBase64(bytes) {
+      let bin = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      return btoa(bin);
+    }
+
+    async function deriveAesKey(password, salt, algorithm) {
+      const enc = new TextEncoder();
+      const material = await crypto.subtle.importKey(
+        'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+      );
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+        material,
+        { name: algorithm, length: 256 },
+        false,
+        ['encrypt']
+      );
+    }
+
+    async function encryptAddress(url, password, method) {
+      const enc = new TextEncoder();
+      if (method === 'xor-b64') {
+        const data = enc.encode(url);
+        const keyBytes = enc.encode(password);
+        const out = new Uint8Array(data.length);
+        for (let i = 0; i < data.length; i++) {
+          out[i] = data[i] ^ keyBytes[i % keyBytes.length];
+        }
+        return bytesToBase64(out);
+      }
+
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const plaintext = enc.encode(url);
+
+      if (method === 'aes-gcm') {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveAesKey(password, salt, 'AES-GCM');
+        const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext));
+        const packed = new Uint8Array(salt.length + iv.length + cipher.length);
+        packed.set(salt, 0);
+        packed.set(iv, salt.length);
+        packed.set(cipher, salt.length + iv.length);
+        return bytesToBase64(packed);
+      }
+
+      if (method === 'aes-cbc') {
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const key = await deriveAesKey(password, salt, 'AES-CBC');
+        const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, plaintext));
+        const packed = new Uint8Array(salt.length + iv.length + cipher.length);
+        packed.set(salt, 0);
+        packed.set(iv, salt.length);
+        packed.set(cipher, salt.length + iv.length);
+        return bytesToBase64(packed);
+      }
+
+      if (method === 'aes-ctr') {
+        const counter = crypto.getRandomValues(new Uint8Array(16));
+        const key = await deriveAesKey(password, salt, 'AES-CTR');
+        const cipher = new Uint8Array(await crypto.subtle.encrypt(
+          { name: 'AES-CTR', counter, length: 64 },
+          key,
+          plaintext
+        ));
+        const packed = new Uint8Array(salt.length + counter.length + cipher.length);
+        packed.set(salt, 0);
+        packed.set(counter, salt.length);
+        packed.set(cipher, salt.length + counter.length);
+        return bytesToBase64(packed);
+      }
+
+      throw new Error('不支持的加密方式');
     }
 
     async function removeEndpointMeta(customerId, name) {
@@ -943,6 +1138,7 @@
             createdAt: endpointsMeta[key]?.createdAt || date,
             updatedAt: endpointsMeta[key]?.updatedAt || date,
             updatedBy,
+            ...(endpointsMeta[key]?.encrypt ? { encrypt: endpointsMeta[key].encrypt } : {}),
           };
           return endpointsMeta[key].createdAt;
         }
@@ -1361,7 +1557,7 @@
       reader.readAsText(file);
     }
 
-    async function deployEndpoint(customerId, name, content) {
+    async function deployEndpoint(customerId, name, content, encryptInfo = null) {
       const path = endpointPath(customerId, name);
       const sha = await getFileSha(path);
       const isNew = !sha;
@@ -1376,7 +1572,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      await recordEndpointMeta(customerId, name, isNew);
+      await recordEndpointMeta(customerId, name, isNew, encryptInfo);
       return isNew;
     }
 
@@ -1419,8 +1615,18 @@
     function bindEndpointEvents() {
       const list = $('#endpoint-list');
 
+      list.querySelectorAll('.endpoint-item').forEach((item) => {
+        item.onclick = (e) => {
+          if (e.target.closest('.endpoint-actions')) return;
+          const key = item.dataset.key;
+          const ep = allEndpoints.find((x) => endpointKey(x.customerId, x.name) === key);
+          if (ep) openEndpointDetail(ep);
+        };
+      });
+
       list.querySelectorAll('.btn-edit').forEach((btn) => {
-        btn.onclick = async () => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
           const customerId = btn.dataset.customerId;
           const name = btn.dataset.name;
           try {
@@ -1432,21 +1638,32 @@
             fields.content.value = text;
             window.scrollTo({ top: 0, behavior: 'smooth' });
             toast('已加载到编辑区');
-          } catch (e) {
-            toast(e.message, 'error');
+          } catch (err) {
+            toast(err.message, 'error');
           }
         };
       });
 
       list.querySelectorAll('.btn-copy-ep').forEach((btn) => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
           const { user, repo } = getConfig();
           copyText(pageUrl(user, repo, btn.dataset.customerId, btn.dataset.name));
         };
       });
 
+      list.querySelectorAll('.btn-copy-cipher').forEach((btn) => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const ep = allEndpoints.find((x) => endpointKey(x.customerId, x.name) === btn.dataset.key);
+          if (ep?.encrypt?.cipher) copyText(ep.encrypt.cipher);
+          else toast('无加密串', 'error');
+        };
+      });
+
       list.querySelectorAll('.btn-del').forEach((btn) => {
-        btn.onclick = async () => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
           const customerId = btn.dataset.customerId;
           const name = btn.dataset.name;
           if (!confirm(`确定删除接口「${name}」？`)) return;
@@ -1458,12 +1675,70 @@
             await removeEndpointMeta(customerId, name);
             toast('已删除', 'success');
             await refreshList();
-          } catch (e) {
-            toast(e.message, 'error');
+          } catch (err) {
+            toast(err.message, 'error');
             btn.disabled = false;
           }
         };
       });
+    }
+
+    function openEndpointDetail(ep) {
+      const { user, repo } = getConfig();
+      const url = pageUrl(user, repo, ep.customerId, ep.name);
+      const encrypt = ep.encrypt;
+      const body = $('#endpoint-detail-body');
+      body.innerHTML = `
+        <div class="detail-row">
+          <label>项目名</label>
+          <div class="detail-value">${ep.name}</div>
+        </div>
+        <div class="detail-row">
+          <label>归属客户</label>
+          <div class="detail-value">${ep.customerName}（${ep.customerId}）</div>
+        </div>
+        <div class="detail-row">
+          <label>访问链接</label>
+          <div class="detail-value">${url}</div>
+          <div class="detail-actions">
+            <button class="btn btn-ghost" type="button" id="detail-copy-url">复制链接</button>
+          </div>
+        </div>
+        <div class="detail-row">
+          <label>时间</label>
+          <div class="detail-value">${formatEndpointDates(ep.createdAt, ep.updatedAt, ep.updatedBy)}</div>
+        </div>
+        ${encrypt ? `
+        <div class="detail-row">
+          <label>加密方式</label>
+          <div class="detail-value">${ENCRYPT_METHOD_LABELS[encrypt.method] || encrypt.method}</div>
+        </div>
+        <div class="detail-row">
+          <label>密钥</label>
+          <div class="detail-value">${encrypt.key || '（未保存）'}</div>
+        </div>
+        <div class="detail-row">
+          <label>加密串</label>
+          <div class="detail-value">${encrypt.cipher}</div>
+          <div class="detail-actions">
+            <button class="btn btn-ghost" type="button" id="detail-copy-cipher">复制加密串</button>
+          </div>
+        </div>
+        ` : `
+        <div class="detail-row">
+          <label>加密</label>
+          <div class="detail-value">无</div>
+        </div>
+        `}
+      `;
+      $('#detail-copy-url').onclick = () => copyText(url);
+      const cipherBtn = $('#detail-copy-cipher');
+      if (cipherBtn) cipherBtn.onclick = () => copyText(encrypt.cipher);
+      $('#endpoint-detail-modal').classList.add('open');
+    }
+
+    function closeEndpointDetail() {
+      $('#endpoint-detail-modal').classList.remove('open');
     }
 
     function renderEndpointList(endpoints) {
@@ -1474,20 +1749,23 @@
         return;
       }
 
-      list.innerHTML = endpoints.map((ep) => `
+      list.innerHTML = endpoints.map((ep) => {
+        const hasEncrypt = !!(ep.encrypt && ep.encrypt.cipher);
+        return `
         <li class="endpoint-item" data-key="${endpointKey(ep.customerId, ep.name)}">
-          <div>
-            <div class="endpoint-name">${ep.name}</div>
+          <div class="endpoint-main">
+            <div class="endpoint-name">${ep.name}${hasEncrypt ? '<span class="encrypt-badge">有加密</span>' : ''}</div>
             <div class="endpoint-preview">${ep.customerName}（${ep.customerId}）</div>
             <div class="endpoint-date">${formatEndpointDates(ep.createdAt, ep.updatedAt, ep.updatedBy)}</div>
           </div>
           <div class="endpoint-actions">
             <button class="btn btn-ghost btn-edit" data-customer-id="${ep.customerId}" data-name="${ep.name}">编辑</button>
             <button class="btn btn-ghost btn-copy-ep" data-customer-id="${ep.customerId}" data-name="${ep.name}">复制</button>
+            ${hasEncrypt ? `<button class="btn btn-ghost btn-copy-cipher" data-key="${endpointKey(ep.customerId, ep.name)}">复制加密串</button>` : ''}
             <button class="btn btn-danger btn-del" data-customer-id="${ep.customerId}" data-name="${ep.name}">删除</button>
           </div>
-        </li>
-      `).join('');
+        </li>`;
+      }).join('');
 
       bindEndpointEvents();
     }
@@ -1504,10 +1782,10 @@
       renderEndpointList(filtered);
     }
 
-    function upsertEndpointInList(customerId, name, createdAt, updatedAt, updatedBy) {
+    function upsertEndpointInList(customerId, name, createdAt, updatedAt, updatedBy, encrypt) {
       const key = endpointKey(customerId, name);
       const customer = getCustomerById(customerId);
-      const ep = {
+      const base = {
         customerId,
         customerName: customer ? customer.name : customerId,
         name,
@@ -1517,9 +1795,15 @@
       };
       const idx = allEndpoints.findIndex((item) => endpointKey(item.customerId, item.name) === key);
       if (idx >= 0) {
-        allEndpoints[idx] = { ...allEndpoints[idx], ...ep };
+        const prev = allEndpoints[idx];
+        allEndpoints[idx] = {
+          ...prev,
+          ...base,
+          encrypt: encrypt !== undefined ? (encrypt || undefined) : prev.encrypt,
+        };
+        if (!allEndpoints[idx].encrypt) delete allEndpoints[idx].encrypt;
       } else {
-        allEndpoints.unshift(ep);
+        allEndpoints.unshift(encrypt ? { ...base, encrypt } : base);
         allEndpoints.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       }
       filterEndpointList();
@@ -1564,6 +1848,7 @@
                 createdAt,
                 updatedAt: updatedAt || createdAt,
                 updatedBy,
+                encrypt: endpointsMeta[key]?.encrypt || undefined,
               });
             }
           } catch {}
@@ -1605,11 +1890,20 @@
       const baseName = fields.name.value.trim();
       const content = fields.content.value;
       const allowDuplicate = fields.duplicate.checked;
+      const wantEncrypt = fields.encrypt.checked;
 
       if (!customerId) return toast('请选择归属客户', 'error');
       if (!baseName) return toast('请填写名字', 'error');
       if (!/^[a-zA-Z0-9_\-.]+$/.test(baseName)) {
         return toast('名字只能包含字母、数字、下划线、连字符和点', 'error');
+      }
+
+      let encryptInfo = null;
+      if (wantEncrypt) {
+        const key = fields.encryptKey.value;
+        const method = fields.encryptMethod.value;
+        if (!key) return toast('请填写加密密钥', 'error');
+        encryptInfo = { method, key, cipher: '' };
       }
 
       const customer = getCustomerById(customerId);
@@ -1636,14 +1930,38 @@
       btn.innerHTML = '<span class="spinner"></span> 部署中…';
 
       try {
-        await deployEndpoint(customerId, deployName, content);
-        const metaKey = endpointKey(customerId, deployName);
-        const meta = endpointsMeta[metaKey] || {};
-        upsertEndpointInList(customerId, deployName, meta.createdAt, meta.updatedAt, meta.updatedBy);
         const { user, repo } = getConfig();
         const url = pageUrl(user, repo, customerId, deployName);
+        if (encryptInfo) {
+          encryptInfo.cipher = await encryptAddress(url, encryptInfo.key, encryptInfo.method);
+        }
+
+        await deployEndpoint(customerId, deployName, content, encryptInfo);
+        const metaKey = endpointKey(customerId, deployName);
+        const meta = endpointsMeta[metaKey] || {};
+        upsertEndpointInList(
+          customerId,
+          deployName,
+          meta.createdAt,
+          meta.updatedAt,
+          meta.updatedBy,
+          meta.encrypt
+        );
         $('#result-url').textContent = url;
         $('#result-box').classList.add('visible');
+        const cipherEl = $('#result-cipher');
+        const cipherBtn = $('#btn-copy-cipher');
+        if (meta.encrypt?.cipher) {
+          cipherEl.style.display = 'block';
+          cipherEl.textContent = `加密串（${ENCRYPT_METHOD_LABELS[meta.encrypt.method] || meta.encrypt.method}）：${meta.encrypt.cipher}`;
+          cipherBtn.style.display = '';
+          cipherBtn.dataset.cipher = meta.encrypt.cipher;
+        } else {
+          cipherEl.style.display = 'none';
+          cipherEl.textContent = '';
+          cipherBtn.style.display = 'none';
+          delete cipherBtn.dataset.cipher;
+        }
 
         if (deployName !== baseName) {
           toast(`已创建新版本：${deployName}`, 'success');
@@ -1664,7 +1982,19 @@
     $('#btn-copy').addEventListener('click', () => {
       copyText($('#result-url').textContent);
     });
-
+    $('#btn-copy-cipher').addEventListener('click', () => {
+      const cipher = $('#btn-copy-cipher').dataset.cipher || '';
+      if (cipher) copyText(cipher);
+      else toast('无加密串', 'error');
+    });
+    fields.encrypt.addEventListener('change', () => {
+      $('#encrypt-options').classList.toggle('visible', fields.encrypt.checked);
+    });
+    $('#btn-close-endpoint-detail').addEventListener('click', closeEndpointDetail);
+    $('#btn-close-endpoint-detail-2').addEventListener('click', closeEndpointDetail);
+    $('#endpoint-detail-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'endpoint-detail-modal') closeEndpointDetail();
+    });
     $('#btn-test').addEventListener('click', testConnection);
     $('#btn-init').addEventListener('click', initDeploy);
     $('#btn-export').addEventListener('click', exportConfig);
