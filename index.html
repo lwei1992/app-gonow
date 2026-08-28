@@ -342,6 +342,30 @@
       margin-top: 4px;
     }
 
+    .customer-portal {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .customer-portal-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .portal-link {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    }
+
+    .portal-link:hover { text-decoration: underline; }
+
     .customer-add-form {
       margin-top: 12px;
       padding-top: 12px;
@@ -627,6 +651,7 @@
     const STORAGE_KEY = 'api-gen-config';
     const CUSTOMERS_FILE = 'customers.json';
     const ENDPOINTS_META_FILE = 'endpoints-meta.json';
+    const PORTAL_DOMAIN = 'legal.fadacai.christmas';
 
     const DEFAULT_CUSTOMERS = [
       { id: '88214563', name: '旧老板', code: '123456' },
@@ -794,6 +819,10 @@
       return id;
     }
 
+    function portalUrl(customerId) {
+      return `https://${PORTAL_DOMAIN}/portal/${customerId}/`;
+    }
+
     function renderCustomerSelect() {
       const sel = fields.customer;
       if (customers.length === 0) {
@@ -830,8 +859,32 @@
               <button class="btn btn-danger btn-del-customer" data-index="${i}">删除</button>
             </div>
           </div>
+          <div class="customer-portal">
+            <div class="customer-label">门户地址</div>
+            <div class="customer-portal-row">
+              <a class="portal-link" href="${portalUrl(c.id)}" target="_blank" rel="noopener">${portalUrl(c.id)}</a>
+              <button type="button" class="btn btn-ghost btn-copy-portal" data-url="${portalUrl(c.id)}">复制</button>
+            </div>
+          </div>
         </li>
       `).join('');
+
+      list.querySelectorAll('.customer-item').forEach((item) => {
+        const idInput = item.querySelector('.cust-id');
+        const link = item.querySelector('.portal-link');
+        const copyBtn = item.querySelector('.btn-copy-portal');
+        const updatePortal = () => {
+          const id = idInput.value.trim();
+          const url = id ? portalUrl(id) : '';
+          link.href = url || '#';
+          link.textContent = url || '（请填写客户 ID）';
+          copyBtn.dataset.url = url;
+        };
+        idInput.addEventListener('input', updatePortal);
+        copyBtn.onclick = () => {
+          if (copyBtn.dataset.url) copyText(copyBtn.dataset.url);
+        };
+      });
 
       list.querySelectorAll('.btn-del-customer').forEach((btn) => {
         btn.onclick = () => {
