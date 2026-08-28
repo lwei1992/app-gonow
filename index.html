@@ -422,7 +422,10 @@
 
     <!-- 已有接口 -->
     <div class="card">
-      <h2>已有接口</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="margin-bottom:0;">已有接口</h2>
+        <button class="btn btn-ghost" id="btn-refresh-list">刷新</button>
+      </div>
       <ul class="endpoint-list" id="endpoint-list">
         <li class="empty-state">加载中…</li>
       </ul>
@@ -532,9 +535,13 @@
 
     async function ghFetch(path, options = {}) {
       const { user, repo, token } = getConfig();
-      const url = `https://api.github.com/repos/${user}/${repo}${path}`;
+      let url = `https://api.github.com/repos/${user}/${repo}${path}`;
+      if (!options.method || options.method === 'GET') {
+        url += `${path.includes('?') ? '&' : '?'}_=${Date.now()}`;
+      }
       const res = await fetch(url, {
         ...options,
+        cache: 'no-store',
         headers: {
           Accept: 'application/vnd.github+json',
           Authorization: `Bearer ${token}`,
@@ -547,6 +554,10 @@
         throw new Error(err.message || `GitHub API 错误 (${res.status})`);
       }
       return res.json();
+    }
+
+    function sleep(ms) {
+      return new Promise((r) => setTimeout(r, ms));
     }
 
     async function getFileSha(filename) {
@@ -690,18 +701,20 @@
         body: JSON.stringify(body),
       });
       // 清理旧版无扩展名文件（会触发下载）
-      const oldSha = await getFileSha(name);
-      if (oldSha) {
-        await ghFetch(contentsApiPath(name), {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Remove legacy endpoint ${name}`,
-            sha: oldSha,
-            branch: getConfig().branch,
-          }),
-        });
-      }
+      try {
+        const oldSha = await getFileSha(name);
+        if (oldSha) {
+          await ghFetch(contentsApiPath(name), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `Remove legacy endpoint ${name}`,
+              sha: oldSha,
+              branch: getConfig().branch,
+            }),
+          });
+        }
+      } catch {}
     }
 
     async function getExistingEndpointNames() {
@@ -736,6 +749,101 @@
       });
     }
 
+    function bindEndpointEvents() {
+      const list = $('#endpoint-list');
+
+      list.querySelectorAll('.btn-edit').forEach((btn) => {
+        btn.onclick = async () => {
+          const name = btn.dataset.name;
+          try {
+            const { branch } = getConfig();
+            const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
+            const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+            fields.name.value = name;
+            fields.content.value = text;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast('已加载到编辑区');
+          } catch (e) {
+            toast(e.message, 'error');
+          }
+        };
+      });
+
+      list.querySelectorAll('.btn-copy-ep').forEach((btn) => {
+        btn.onclick = () => {
+          const { user, repo } = getConfig();
+          copyText(pageUrl(user, repo, btn.dataset.name));
+        };
+      });
+
+      list.querySelectorAll('.btn-del').forEach((btn) => {
+        btn.onclick = async () => {
+          const name = btn.dataset.name;
+          if (!confirm(`确定删除接口「${name}」？`)) return;
+          try {
+            btn.disabled = true;
+            const { branch } = getConfig();
+            const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
+            await deleteEndpoint(endpointPath(name), data.sha);
+            toast('已删除', 'success');
+            await refreshList();
+          } catch (e) {
+            toast(e.message, 'error');
+            btn.disabled = false;
+          }
+        };
+      });
+    }
+
+    function renderEndpointList(endpoints) {
+      const list = $('#endpoint-list');
+      if (endpoints.length === 0) {
+        list.innerHTML = '<li class="empty-state">暂无接口，请先生成一个</li>';
+        return;
+      }
+
+      list.innerHTML = endpoints.map((f) => `
+        <li class="endpoint-item" data-name="${f.name}">
+          <div>
+            <div class="endpoint-name">${f.name}</div>
+            <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
+          </div>
+          <div class="endpoint-actions">
+            <button class="btn btn-ghost btn-edit" data-name="${f.name}">编辑</button>
+            <button class="btn btn-ghost btn-copy-ep" data-name="${f.name}">复制</button>
+            <button class="btn btn-danger btn-del" data-name="${f.name}">删除</button>
+          </div>
+        </li>
+      `).join('');
+
+      bindEndpointEvents();
+    }
+
+    function upsertEndpointInList(name) {
+      const list = $('#endpoint-list');
+      if (list.querySelector(`[data-name="${CSS.escape(name)}"]`)) return;
+
+      const empty = list.querySelector('.empty-state');
+      if (empty) empty.remove();
+
+      const li = document.createElement('li');
+      li.className = 'endpoint-item';
+      li.dataset.name = name;
+      li.innerHTML = `
+        <div>
+          <div class="endpoint-name">${name}</div>
+          <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
+        </div>
+        <div class="endpoint-actions">
+          <button class="btn btn-ghost btn-edit" data-name="${name}">编辑</button>
+          <button class="btn btn-ghost btn-copy-ep" data-name="${name}">复制</button>
+          <button class="btn btn-danger btn-del" data-name="${name}">删除</button>
+        </div>
+      `;
+      list.prepend(li);
+      bindEndpointEvents();
+    }
+
     async function listEndpoints() {
       const list = $('#endpoint-list');
       try {
@@ -744,69 +852,11 @@
         const endpoints = items.filter(
           (f) => f.type === 'dir' && !f.name.startsWith('.')
         );
-
-        if (endpoints.length === 0) {
-          list.innerHTML = '<li class="empty-state">暂无接口，请先生成一个</li>';
-          return;
-        }
-
-        list.innerHTML = endpoints.map((f) => `
-          <li class="endpoint-item" data-name="${f.name}">
-            <div>
-              <div class="endpoint-name">${f.name}</div>
-              <div class="endpoint-preview" title="点击编辑可查看内容">已部署</div>
-            </div>
-            <div class="endpoint-actions">
-              <button class="btn btn-ghost btn-edit" data-name="${f.name}">编辑</button>
-              <button class="btn btn-ghost btn-copy-ep" data-name="${f.name}">复制</button>
-              <button class="btn btn-danger btn-del" data-name="${f.name}">删除</button>
-            </div>
-          </li>
-        `).join('');
-
-        list.querySelectorAll('.btn-edit').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            const name = btn.dataset.name;
-            try {
-              const { branch } = getConfig();
-              const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
-              const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-              fields.name.value = name;
-              fields.content.value = text;
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              toast('已加载到编辑区');
-            } catch (e) {
-              toast(e.message, 'error');
-            }
-          });
-        });
-
-        list.querySelectorAll('.btn-copy-ep').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const { user, repo } = getConfig();
-            copyText(pageUrl(user, repo, btn.dataset.name));
-          });
-        });
-
-        list.querySelectorAll('.btn-del').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            const name = btn.dataset.name;
-            if (!confirm(`确定删除接口「${name}」？`)) return;
-            try {
-              btn.disabled = true;
-              const { branch } = getConfig();
-              const data = await ghFetch(`${contentsApiPath(endpointPath(name))}?ref=${branch}`);
-              await deleteEndpoint(endpointPath(name), data.sha);
-              toast('已删除', 'success');
-              await refreshList();
-            } catch (e) {
-              toast(e.message, 'error');
-              btn.disabled = false;
-            }
-          });
-        });
+        renderEndpointList(endpoints);
+        return endpoints.map((f) => f.name);
       } catch (e) {
         list.innerHTML = `<li class="empty-state">${e.message}</li>`;
+        throw e;
       }
     }
 
@@ -817,8 +867,17 @@
       );
     }
 
-    async function refreshList() {
-      await listEndpoints();
+    async function refreshList(expectedName = null) {
+      const retries = expectedName ? 4 : 1;
+      for (let i = 0; i < retries; i++) {
+        try {
+          const names = await listEndpoints();
+          if (!expectedName || names.includes(expectedName)) return;
+        } catch {
+          if (i === retries - 1) throw new Error('刷新列表失败');
+        }
+        if (i < retries - 1) await sleep(800 * (i + 1));
+      }
     }
 
     $('#btn-generate').addEventListener('click', async () => {
@@ -847,6 +906,7 @@
         const isUpdate = !allowDuplicate && existingNames.has(baseName);
 
         await deployEndpoint(deployName, content);
+        upsertEndpointInList(deployName);
         const { user, repo } = getConfig();
         const url = pageUrl(user, repo, deployName);
         $('#result-url').textContent = url;
@@ -859,7 +919,7 @@
         } else {
           toast('部署成功！约 1 分钟后生效', 'success');
         }
-        await refreshList();
+        refreshList(deployName).catch(() => {});
       } catch (e) {
         toast(e.message, 'error');
       } finally {
@@ -875,6 +935,20 @@
     $('#btn-test').addEventListener('click', testConnection);
     $('#btn-init').addEventListener('click', initDeploy);
     $('#btn-export').addEventListener('click', exportConfig);
+    $('#btn-refresh-list').addEventListener('click', async () => {
+      const btn = $('#btn-refresh-list');
+      btn.disabled = true;
+      btn.textContent = '刷新中…';
+      try {
+        await refreshList();
+        toast('列表已刷新', 'success');
+      } catch (e) {
+        toast(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '刷新';
+      }
+    });
     $('#btn-import').addEventListener('click', () => $('#import-file').click());
     $('#import-file').addEventListener('change', (e) => {
       if (e.target.files[0]) importConfig(e.target.files[0]);
