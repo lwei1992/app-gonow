@@ -372,6 +372,29 @@
       border-top: 1px solid var(--border);
     }
 
+    .domain-config {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .domain-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .domain-row input { flex: 1; }
+
+    .domain-preview {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 8px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      word-break: break-all;
+    }
+
     @media (max-width: 520px) {
       .customer-row { grid-template-columns: 1fr; }
     }
@@ -605,6 +628,15 @@
         <button class="modal-close" id="btn-close-customers" type="button">&times;</button>
       </div>
       <div class="modal-body">
+        <div class="domain-config">
+          <label for="base-domain">全局域名</label>
+          <div class="domain-row">
+            <input type="text" id="base-domain" value="fadacai.christmas" placeholder="fadacai.christmas" autocomplete="off">
+            <button class="btn btn-secondary" id="btn-save-domain" type="button">保存域名</button>
+          </div>
+          <p class="hint">门户地址格式：https://{仓库名}.{域名}/portal/{客户ID}/</p>
+          <div class="domain-preview" id="portal-domain-preview"></div>
+        </div>
         <ul class="customer-list" id="customer-list">
           <li class="empty-state">加载中…</li>
         </ul>
@@ -651,7 +683,8 @@
     const STORAGE_KEY = 'api-gen-config';
     const CUSTOMERS_FILE = 'customers.json';
     const ENDPOINTS_META_FILE = 'endpoints-meta.json';
-    const PORTAL_DOMAIN = 'app-gonow.fadacai.christmas';
+    const SITE_CONFIG_FILE = 'site-config.json';
+    const DEFAULT_BASE_DOMAIN = 'fadacai.christmas';
 
     const DEFAULT_CUSTOMERS = [
       { id: '88214563', name: '旧老板', code: '123456' },
@@ -661,6 +694,7 @@
 
     let customers = [];
     let endpointsMeta = {};
+    let baseDomain = DEFAULT_BASE_DOMAIN;
 
     const DEFAULT_CONFIG = {
       user: 'lwei1992',
@@ -677,6 +711,7 @@
         fields.branch.value = saved.branch || DEFAULT_CONFIG.branch;
         fields.token.value = saved.token || DEFAULT_CONFIG.token;
         if (saved.duplicate != null) fields.duplicate.checked = saved.duplicate;
+        if (saved.baseDomain) baseDomain = saved.baseDomain;
       } catch {
         fields.user.value = DEFAULT_CONFIG.user;
         fields.repo.value = DEFAULT_CONFIG.repo;
@@ -692,6 +727,7 @@
         branch: fields.branch.value.trim() || 'main',
         token: fields.token.value.trim(),
         duplicate: fields.duplicate.checked,
+        baseDomain,
       }));
     }
 
@@ -802,6 +838,62 @@
       return `${customerId}/${name}/index.html`;
     }
 
+    function getPortalDomain() {
+      const repo = fields.repo.value.trim() || DEFAULT_CONFIG.repo;
+      return `${repo}.${baseDomain}`;
+    }
+
+    function portalUrl(customerId) {
+      return `https://${getPortalDomain()}/portal/${customerId}/`;
+    }
+
+    function updateDomainPreview() {
+      const preview = $('#portal-domain-preview');
+      if (preview) preview.textContent = `当前门户域名：${getPortalDomain()}`;
+      const input = $('#base-domain');
+      if (input && document.activeElement !== input) input.value = baseDomain;
+    }
+
+    async function loadSiteConfig() {
+      try {
+        const { branch } = getConfig();
+        const data = await ghFetch(`${contentsApiPath(SITE_CONFIG_FILE)}?ref=${branch}`);
+        const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        const cfg = JSON.parse(text);
+        if (cfg.baseDomain) baseDomain = cfg.baseDomain;
+      } catch {}
+      updateDomainPreview();
+    }
+
+    async function applyDomainChange(newDomain) {
+      baseDomain = newDomain;
+      const { repo, branch } = getConfig();
+      const fullDomain = `${repo}.${newDomain}`;
+
+      await uploadFile('CNAME', fullDomain + '\n');
+      await uploadFile(SITE_CONFIG_FILE, JSON.stringify({ baseDomain: newDomain }, null, 2));
+
+      try {
+        await ghFetch('/pages', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cname: fullDomain, source: { branch, path: '/' } }),
+        });
+      } catch {
+        try {
+          await ghFetch('/pages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cname: fullDomain, source: { branch, path: '/' } }),
+          });
+        } catch {}
+      }
+
+      saveConfig();
+      updateDomainPreview();
+      renderCustomerList();
+    }
+
     function pageUrl(user, repo, customerId, name) {
       return `https://${user}.github.io/${repo}/${customerId}/${name}`;
     }
@@ -820,10 +912,6 @@
         id = String(Math.floor(10000000 + Math.random() * 90000000));
       } while (customers.some((c) => c.id === id));
       return id;
-    }
-
-    function portalUrl(customerId) {
-      return `https://${PORTAL_DOMAIN}/portal/${customerId}/`;
     }
 
     function renderCustomerSelect() {
@@ -1472,6 +1560,38 @@
     $('#btn-open-customers').addEventListener('click', openCustomerModal);
     $('#btn-close-customers').addEventListener('click', closeCustomerModal);
     $('#btn-cancel-customers').addEventListener('click', closeCustomerModal);
+    $('#base-domain').addEventListener('input', () => {
+      const repo = fields.repo.value.trim() || DEFAULT_CONFIG.repo;
+      const d = $('#base-domain').value.trim() || DEFAULT_BASE_DOMAIN;
+      $('#portal-domain-preview').textContent = `预览门户域名：${repo}.${d}`;
+    });
+    $('#btn-save-domain').addEventListener('click', async () => {
+      const newDomain = $('#base-domain').value.trim().replace(/^\.+|\.+$/g, '');
+      if (!newDomain) return toast('请填写域名', 'error');
+      if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/.test(newDomain)) {
+        return toast('域名格式不正确', 'error');
+      }
+      if (newDomain === baseDomain) return toast('域名未更改');
+
+      const repo = fields.repo.value.trim() || DEFAULT_CONFIG.repo;
+      const fullDomain = `${repo}.${newDomain}`;
+      if (!confirm(`确定将域名从「${baseDomain}」改为「${newDomain}」？\n\n门户地址将变为：https://${fullDomain}/portal/`)) return;
+      if (!confirm(`【二次确认】\n\n将执行以下操作：\n1. 更新 CNAME 为 ${fullDomain}\n2. 更新 GitHub Pages 自定义域名\n3. 保存到 site-config.json\n\n确定继续？`)) return;
+
+      const btn = $('#btn-save-domain');
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      try {
+        getConfig();
+        await applyDomainChange(newDomain);
+        toast(`域名已更新为 ${fullDomain}`, 'success');
+      } catch (e) {
+        toast(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存域名';
+      }
+    });
     $('#customer-modal').addEventListener('click', (e) => {
       if (e.target.id === 'customer-modal') closeCustomerModal();
     });
@@ -1480,6 +1600,8 @@
     });
 
     function openCustomerModal() {
+      $('#base-domain').value = baseDomain;
+      updateDomainPreview();
       renderCustomerList();
       $('#customer-modal').classList.add('open');
     }
@@ -1518,6 +1640,7 @@
         return;
       }
       try {
+        await loadSiteConfig();
         await loadCustomers();
         await refreshList();
       } catch (e) {
