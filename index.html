@@ -841,6 +841,10 @@
         const html = await htmlRes.text();
         await uploadFile('index.html', html);
         await uploadFile('.nojekyll', '');
+        const defaultCustomers = DEFAULT_CUSTOMERS.map((c) => ({ ...c }));
+        try {
+          await uploadFile(CUSTOMERS_FILE, JSON.stringify({ customers: defaultCustomers }, null, 2));
+        } catch {}
         const { user, repo } = getConfig();
         const url = `https://${user}.github.io/${repo}/`;
         showStatus(`生成器已上传，访问地址：${url}（约 1-2 分钟生效）`, true);
