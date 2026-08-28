@@ -885,8 +885,46 @@
       validateCustomers(list);
       customers = list;
       await uploadFile(CUSTOMERS_FILE, JSON.stringify({ customers }, null, 2));
+      await deployPortalConfig();
+      await deployPortalPages(customers);
       renderCustomerList();
       renderCustomerSelect();
+    }
+
+    let portalTemplateCache = null;
+
+    async function getPortalTemplate() {
+      if (portalTemplateCache) return portalTemplateCache;
+      const res = await fetch('portal-template.html');
+      if (!res.ok) throw new Error('无法加载 portal-template.html');
+      portalTemplateCache = await res.text();
+      return portalTemplateCache;
+    }
+
+    async function buildPortalPage(customer) {
+      const { user, repo, branch } = getConfig();
+      const tpl = await getPortalTemplate();
+      return tpl
+        .replace(/__CUSTOMER_ID__/g, customer.id)
+        .replace(/__CUSTOMER_NAME__/g, customer.name)
+        .replace(/__CUSTOMER_CODE__/g, customer.code)
+        .replace(/__REPO_USER__/g, user)
+        .replace(/__REPO_NAME__/g, repo)
+        .replace(/__BRANCH__/g, branch);
+    }
+
+    async function deployPortalConfig() {
+      const token = fields.token.value.trim();
+      if (!token) return;
+      const content = `window.PORTAL_CONFIG = {\n  token: '${token}',\n};\n`;
+      await uploadFile('portal-config.js', content);
+    }
+
+    async function deployPortalPages(customerList) {
+      for (const c of customerList) {
+        const html = await buildPortalPage(c);
+        await uploadFile(`portal/${c.id}/index.html`, html);
+      }
     }
 
     function contentsApiPath(filePath) {
@@ -1002,6 +1040,8 @@
         const defaultCustomers = DEFAULT_CUSTOMERS.map((c) => ({ ...c }));
         try {
           await uploadFile(CUSTOMERS_FILE, JSON.stringify({ customers: defaultCustomers }, null, 2));
+          await deployPortalConfig();
+          await deployPortalPages(defaultCustomers);
         } catch {}
         const { user, repo } = getConfig();
         const url = `https://${user}.github.io/${repo}/`;
@@ -1365,7 +1405,7 @@
       try {
         getConfig();
         await saveCustomers();
-        toast('客户列表已保存', 'success');
+        toast('客户列表已保存，客户门户已同步', 'success');
         closeCustomerModal();
       } catch (e) {
         toast(e.message, 'error');
