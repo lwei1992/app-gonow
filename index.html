@@ -391,6 +391,88 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .modal-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .modal-close:hover { color: var(--text); background: var(--surface-2); }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .modal-footer .btn { flex: 1; }
+
+    .field-with-btn {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .field-with-btn .field { flex: 1; margin-bottom: 0; }
+
+    .field-with-btn .btn { flex-shrink: 0; margin-bottom: 0; height: 42px; }
   </style>
 </head>
 <body>
@@ -435,41 +517,17 @@
       <div class="config-status" id="config-status"></div>
     </div>
 
-    <!-- 客户列表 -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <h2 style="margin-bottom:0;">客户列表</h2>
-        <button class="btn btn-ghost" id="btn-save-customers">保存客户</button>
-      </div>
-      <ul class="customer-list" id="customer-list">
-        <li class="empty-state">加载中…</li>
-      </ul>
-      <div class="customer-add-form">
-        <p class="customer-label">新增客户</p>
-        <div class="row">
-          <div class="field">
-            <label for="new-customer-id">客户 ID（留空随机）</label>
-            <input type="text" id="new-customer-id" placeholder="8位数字" maxlength="8" autocomplete="off">
-          </div>
-          <div class="field">
-            <label for="new-customer-name">名字</label>
-            <input type="text" id="new-customer-name" placeholder="客户名称" autocomplete="off">
-          </div>
-        </div>
-        <div class="field">
-          <label for="new-customer-code">修改码</label>
-          <input type="text" id="new-customer-code" value="123456" autocomplete="off">
-        </div>
-        <button class="btn btn-secondary" id="btn-add-customer" style="width:100%;">添加客户</button>
-      </div>
-    </div>
-
     <!-- 生成接口 -->
     <div class="card">
       <h2>生成接口</h2>
       <div class="field">
         <label for="ep-customer">归属客户</label>
-        <select id="ep-customer"></select>
+        <div class="field-with-btn">
+          <div class="field">
+            <select id="ep-customer"></select>
+          </div>
+          <button class="btn btn-secondary" id="btn-open-customers" type="button">管理客户</button>
+        </div>
         <p class="hint">每个项目必须选择归属客户</p>
       </div>
       <div class="field">
@@ -513,6 +571,43 @@
   </div>
 
   <div id="toast"></div>
+
+  <!-- 客户管理弹窗 -->
+  <div class="modal-overlay" id="customer-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>客户列表</h2>
+        <button class="modal-close" id="btn-close-customers" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <ul class="customer-list" id="customer-list">
+          <li class="empty-state">加载中…</li>
+        </ul>
+        <div class="customer-add-form">
+          <p class="customer-label">新增客户</p>
+          <div class="row">
+            <div class="field">
+              <label for="new-customer-id">客户 ID（留空随机）</label>
+              <input type="text" id="new-customer-id" placeholder="8位数字" maxlength="8" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="new-customer-name">名字</label>
+              <input type="text" id="new-customer-name" placeholder="客户名称" autocomplete="off">
+            </div>
+          </div>
+          <div class="field">
+            <label for="new-customer-code">修改码</label>
+            <input type="text" id="new-customer-code" value="123456" autocomplete="off">
+          </div>
+          <button class="btn btn-secondary" id="btn-add-customer" style="width:100%;" type="button">添加客户</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-customers" type="button">取消</button>
+        <button class="btn btn-primary" id="btn-save-customers" type="button">保存客户</button>
+      </div>
+    </div>
+  </div>
 
     <script>
     const $ = (sel) => document.querySelector(sel);
@@ -1181,6 +1276,7 @@
         getConfig();
         await saveCustomers();
         toast('客户列表已保存', 'success');
+        closeCustomerModal();
       } catch (e) {
         toast(e.message, 'error');
       } finally {
@@ -1188,6 +1284,25 @@
         btn.textContent = '保存客户';
       }
     });
+    $('#btn-open-customers').addEventListener('click', openCustomerModal);
+    $('#btn-close-customers').addEventListener('click', closeCustomerModal);
+    $('#btn-cancel-customers').addEventListener('click', closeCustomerModal);
+    $('#customer-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'customer-modal') closeCustomerModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeCustomerModal();
+    });
+
+    function openCustomerModal() {
+      renderCustomerList();
+      $('#customer-modal').classList.add('open');
+    }
+
+    function closeCustomerModal() {
+      $('#customer-modal').classList.remove('open');
+    }
+
     $('#btn-add-customer').addEventListener('click', async () => {
       const idInput = $('#new-customer-id').value.trim();
       const name = $('#new-customer-name').value.trim();
@@ -1215,7 +1330,6 @@
     async function initApp() {
       if (!fields.user.value || !fields.repo.value || !fields.token.value) {
         $('#endpoint-list').innerHTML = '<li class="empty-state">请先完成 GitHub 配置</li>';
-        $('#customer-list').innerHTML = '<li class="empty-state">请先完成 GitHub 配置</li>';
         return;
       }
       try {
