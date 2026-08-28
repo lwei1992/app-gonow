@@ -30,7 +30,7 @@
     }
 
     .container {
-      max-width: 720px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 40px 20px 60px;
     }
@@ -78,6 +78,52 @@
       letter-spacing: 0.06em;
       color: var(--text-muted);
       margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-header h2 {
+      margin-bottom: 0;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .main-grid .card {
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+
+    .card-list .endpoint-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .main-grid .card {
+        min-height: auto;
+      }
+
+      .card-list .endpoint-list {
+        max-height: 480px;
+      }
     }
 
     .field {
@@ -313,7 +359,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 320px;
+      max-width: 100%;
     }
 
     .endpoint-date {
@@ -549,51 +595,52 @@
       </div>
     </header>
 
-    <!-- 生成接口 -->
-    <div class="card">
-      <h2>生成接口</h2>
-      <div class="field">
-        <label for="ep-customer">归属客户</label>
-        <div class="field-with-btn">
-          <div class="field">
-            <select id="ep-customer"></select>
+    <!-- 生成接口 + 已有接口 -->
+    <div class="main-grid">
+      <div class="card">
+        <h2>生成接口</h2>
+        <div class="field">
+          <label for="ep-customer">归属客户</label>
+          <div class="field-with-btn">
+            <div class="field">
+              <select id="ep-customer"></select>
+            </div>
+            <button class="btn btn-secondary" id="btn-open-customers" type="button">管理客户</button>
           </div>
-          <button class="btn btn-secondary" id="btn-open-customers" type="button">管理客户</button>
+          <p class="hint">每个项目必须选择归属客户</p>
         </div>
-        <p class="hint">每个项目必须选择归属客户</p>
-      </div>
-      <div class="field">
-        <label for="ep-name">名字</label>
-        <input type="text" id="ep-name" placeholder="hahaha" autocomplete="off">
-        <p class="hint">访问地址为 /客户ID/名字/</p>
-      </div>
-      <div class="field">
-        <label for="ep-content">显示内容</label>
-        <textarea id="ep-content" placeholder="juxsne~0~https://www.baidu.com/"></textarea>
-        <p class="hint">页面将仅输出此内容，不包含任何 HTML 标签或其他文字</p>
-      </div>
-      <label class="checkbox-field" for="ep-duplicate">
-        <input type="checkbox" id="ep-duplicate">
-        <span>同名字项目</span>
-      </label>
-      <p class="hint" style="margin-top: -8px; margin-bottom: 16px;">开启后，同名再次生成会自动创建 _v2、_v3…；关闭则更新已有项目</p>
-      <button class="btn btn-primary" id="btn-generate">生成并部署</button>
+        <div class="field">
+          <label for="ep-name">名字</label>
+          <input type="text" id="ep-name" placeholder="hahaha" autocomplete="off">
+          <p class="hint">访问地址为 /客户ID/名字/</p>
+        </div>
+        <div class="field">
+          <label for="ep-content">显示内容</label>
+          <textarea id="ep-content" placeholder="juxsne~0~https://www.baidu.com/"></textarea>
+          <p class="hint">页面将仅输出此内容，不包含任何 HTML 标签或其他文字</p>
+        </div>
+        <label class="checkbox-field" for="ep-duplicate">
+          <input type="checkbox" id="ep-duplicate">
+          <span>同名字项目</span>
+        </label>
+        <p class="hint" style="margin-top: -8px; margin-bottom: 16px;">开启后，同名再次生成会自动创建 _v2、_v3…；关闭则更新已有项目</p>
+        <button class="btn btn-primary" id="btn-generate">生成并部署</button>
 
-      <div class="result-box" id="result-box">
-        <div class="result-url" id="result-url"></div>
-        <button class="btn btn-ghost" id="btn-copy">复制链接</button>
+        <div class="result-box" id="result-box">
+          <div class="result-url" id="result-url"></div>
+          <button class="btn btn-ghost" id="btn-copy">复制链接</button>
+        </div>
       </div>
-    </div>
 
-    <!-- 已有接口 -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <h2 style="margin-bottom:0;">已有接口</h2>
-        <button class="btn btn-ghost" id="btn-refresh-list">刷新</button>
+      <div class="card card-list">
+        <div class="card-header">
+          <h2>已有接口</h2>
+          <button class="btn btn-ghost" id="btn-refresh-list">刷新</button>
+        </div>
+        <ul class="endpoint-list" id="endpoint-list">
+          <li class="empty-state">加载中…</li>
+        </ul>
       </div>
-      <ul class="endpoint-list" id="endpoint-list">
-        <li class="empty-state">加载中…</li>
-      </ul>
     </div>
   </div>
 
