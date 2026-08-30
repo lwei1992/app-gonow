@@ -1,15 +1,5 @@
 {
   "endpoints": {
-    "51928374/Nilenzs": {
-      "createdAt": "2026-08-28T21:03:43.185Z",
-      "updatedAt": "2026-08-29T09:16:40.011Z",
-      "updatedBy": "customer",
-      "encrypt": {
-        "method": "aes-gcm",
-        "key": "Nilenzs",
-        "cipher": "BzV+nZVheohtgHxJ8op6O8wLp86YXzWa8phK9d89zBe7NMTz/EYnyijcUFylRVjqIawWTN/oElbAuGoQOAokBkkbqrf1Q5e6gVdnTBnzOKH0EhVjAjtu0QIG4sDfbRtBpw=="
-      }
-    },
     "51928374/ShowFirePlan": {
       "createdAt": "2026-08-30T21:50:50.183Z",
       "updatedAt": "2026-08-30T21:50:50.183Z",
