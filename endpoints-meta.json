@@ -2,8 +2,8 @@
   "endpoints": {
     "51928374/ShowFirePlan": {
       "createdAt": "2026-08-30T21:50:50.183Z",
-      "updatedAt": "2026-08-30T21:50:50.183Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-08-30T22:08:50.443Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "ShowFirePlan",
