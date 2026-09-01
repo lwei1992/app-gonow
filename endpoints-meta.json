@@ -1,3 +1,14 @@
 {
-  "endpoints": {}
+  "endpoints": {
+    "88214563/demo": {
+      "createdAt": "2026-09-01T05:47:17.525Z",
+      "updatedAt": "2026-09-01T05:47:17.525Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "demo",
+        "cipher": "RZEcNU1qI/BQc8T0v2N72fSLEcQJAb79jY4Is+0rM5hwsNMyyQn8b6fIN8X8F+gFdJRkROK8dbw1I2VzLP0FsVbwVNSi++FdAjvLNFrQBIyY1PT50ivo6u00UT9+qA=="
+      }
+    }
+  }
 }
