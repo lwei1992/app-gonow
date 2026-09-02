@@ -2,12 +2,12 @@
   "endpoints": {
     "51928374/Roompfit": {
       "createdAt": "2026-09-02T07:28:47.642Z",
-      "updatedAt": "2026-09-02T07:45:25.816Z",
+      "updatedAt": "2026-09-02T07:46:09.597Z",
       "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "Roompfit",
-        "cipher": "6lbTLwJomFnr7gQIvSgfLZNXvTf6ZKdV4T9tqbIe+ItqI5lgQUZG1pnGm3wp2w8wlutApKoK/nTOuyHKzmOxi65TGHCMkIcvVO3WOt/KneLWVlw1fU++R/WRibr8KXF48mc="
+        "cipher": "+a2d95FhR3Pi4nfQo3QZqe7j0bAegjB9t3KBG+BqFdt48Nyr7kHY2kT1fmBnRYtGTg+dSuRTgzyEexjeZWKckGJhYdc0fqNFVXyDzYkO+g4YB3p9hz6+pUHM1i8pEHbQpq4="
       }
     }
   }
