@@ -9,6 +9,16 @@
         "key": "demo",
         "cipher": "RZEcNU1qI/BQc8T0v2N72fSLEcQJAb79jY4Is+0rM5hwsNMyyQn8b6fIN8X8F+gFdJRkROK8dbw1I2VzLP0FsVbwVNSi++FdAjvLNFrQBIyY1PT50ivo6u00UT9+qA=="
       }
+    },
+    "51928374/Roompfit": {
+      "createdAt": "2026-09-02T07:28:47.642Z",
+      "updatedAt": "2026-09-02T07:28:47.642Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "demo",
+        "cipher": "3rUa2jkPeMvwk5iWG32xMlaKxCUO6RkSyGluulTZlSUFq+/9/sc/mzUSp0Gg2kRrjDwJuWuZqJF+RYd1zgMLTRyQU5/GtiIdoH8ct/NrNXnydPRuxleYJZmF2IwRGpE55TQ="
+      }
     }
   }
 }
