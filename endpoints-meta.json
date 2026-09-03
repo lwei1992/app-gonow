@@ -9,6 +9,16 @@
         "key": "Roompfit",
         "cipher": "+a2d95FhR3Pi4nfQo3QZqe7j0bAegjB9t3KBG+BqFdt48Nyr7kHY2kT1fmBnRYtGTg+dSuRTgzyEexjeZWKckGJhYdc0fqNFVXyDzYkO+g4YB3p9hz6+pUHM1i8pEHbQpq4="
       }
+    },
+    "73649281/Xiominso": {
+      "createdAt": "2026-09-03T09:00:29.243Z",
+      "updatedAt": "2026-09-03T09:00:29.243Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "Xiominso",
+        "cipher": "s2p47iFDwfbL75eKTpsNsxhbxMdlrILjyz1IiJwJxIplCMyvFDjDLlVRnET9DcPOFcQh/gyJo0bg+znecIu/M2sLTR3r/dDCOlbYdMJ3dHkl+koFXppPd0voikac14Xt/OI="
+      }
     }
   }
 }
