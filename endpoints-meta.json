@@ -12,8 +12,8 @@
     },
     "73649281/Xiominso": {
       "createdAt": "2026-09-03T09:00:29.243Z",
-      "updatedAt": "2026-09-03T09:00:29.243Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-09-03T09:13:32.866Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "Xiominso",
