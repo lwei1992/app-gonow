@@ -32,12 +32,12 @@
     },
     "45862551/FlruneMall": {
       "createdAt": "2026-09-09T05:01:19.487Z",
-      "updatedAt": "2026-09-09T05:01:19.487Z",
+      "updatedAt": "2026-09-09T05:06:59.758Z",
       "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "FlruneMall",
-        "cipher": "7HCJp2XH/mVUtCz3zxTwT2pZzXB3S8FMDonx6zuQK+Xi8f9TAjsYnTe0sgAwLZWt6nF/tZiuT9KuYhsrauhLWLIqhps1o3Syc8fnnQBoU5+UKa+dX0efWxDHSUV5ovbnpaafyQ=="
+        "cipher": "bXADdhgEg1vaX0cziw9qmo3f9HwRcGY8lX4PVTRt9Lk5EcT8ayLPKgiGeOYoFzUKdCXGOmp5Lj55VwHr4jUb/gXwJSJWbvGvsqbpTIGYkQdVtS/0znzzvfH0o2MO6ltS2upN+Q=="
       }
     }
   }
