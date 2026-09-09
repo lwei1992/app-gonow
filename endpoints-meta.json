@@ -29,6 +29,16 @@
         "key": "Happefuons",
         "cipher": "6Sy7Rq6/9njJ8ez4Fb/pxnNJPXNyVofUx8qIAWjq/uoBYpzhj6C91peJmMuBa2aljp64nTW/MUIYKn0R6qQHZ3WS6WF10HZd5QCKCbkCoHHBKPMSrnPzjQptScAoAu/zI9nk6Q=="
       }
+    },
+    "45862551/FlruneMall": {
+      "createdAt": "2026-09-09T05:01:19.487Z",
+      "updatedAt": "2026-09-09T05:01:19.487Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "FlruneMall",
+        "cipher": "7HCJp2XH/mVUtCz3zxTwT2pZzXB3S8FMDonx6zuQK+Xi8f9TAjsYnTe0sgAwLZWt6nF/tZiuT9KuYhsrauhLWLIqhps1o3Syc8fnnQBoU5+UKa+dX0efWxDHSUV5ovbnpaafyQ=="
+      }
     }
   }
 }
