@@ -39,6 +39,16 @@
         "key": "FlruneMall",
         "cipher": "zi8iH6X7HSIsB/Nzjel2M4O7YVbKWFeOk+Ls77qaDMP+MBBCggoAGVqXzNUOaBWsI8w34LJ5axVWtxpn0Fp9yTvsR1QpjdxnSX+oxatxLwoEgYWj1PiouWPMPth9+oWtFMHMnw=="
       }
+    },
+    "76676392/Yoopenxs": {
+      "createdAt": "2026-09-10T16:02:14.593Z",
+      "updatedAt": "2026-09-10T16:02:14.593Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "Yoopenxs",
+        "cipher": "CgLntDGOuneyhhVcDgMwGCySJLdsVIBYvKu9pnJ31kjmsTD5KAhC3XbzPvfsT8qGRRwsIcUwW26Q/265w+L/gvwHVc6Cov+XCFer6fNcUrhDtPtOyZhqdTUqOrQZn0i/xqI="
+      }
     }
   }
 }
