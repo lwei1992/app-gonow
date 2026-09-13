@@ -72,12 +72,22 @@
     },
     "21155909/sifangyoupin": {
       "createdAt": "2026-09-13T08:57:30.534Z",
-      "updatedAt": "2026-09-13T13:41:53.432Z",
-      "updatedBy": "customer",
+      "updatedAt": "2026-09-13T09:52:56.259Z",
+      "updatedBy": "self",
       "encrypt": {
         "method": "xor-b64",
         "key": "sifangyoupin",
         "cipher": "Gx0SER1dVkAZBwwHQlBfU0AAEBsdBQtAGgZJAB4XVAgaHgYZXFtXUFtSQF9MXxoHFQgIBhcIDB8cHg=="
+      }
+    },
+    "22104620/zhidatong": {
+      "createdAt": "2026-09-13T19:11:26.807Z",
+      "updatedAt": "2026-09-13T19:11:26.807Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "zhidatong",
+        "cipher": "3D9vOkALnib/yJoOvKKtIIwkC+VAIvqpgBDeERXP4HbrkNC/54+E1ei8cUTaldM70+mzCQx68udnPGTBsoQsAateyv8BXF/5r7iQQtfps8zry370GOE4UKIAlHv2TaS+46io"
       }
     }
   }
