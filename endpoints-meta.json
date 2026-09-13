@@ -72,12 +72,12 @@
     },
     "21155909/sifangyoupin": {
       "createdAt": "2026-09-13T08:57:30.534Z",
-      "updatedAt": "2026-09-13T08:57:51.992Z",
+      "updatedAt": "2026-09-13T09:40:27.942Z",
       "updatedBy": "self",
       "encrypt": {
-        "method": "aes-gcm",
+        "method": "xor-b64",
         "key": "sifangyoupin",
-        "cipher": "UixSAqy6LTPEVF9WJeV028J1c30G0Q3jkNOaEpfxf680jNCxu0sB6HbZecdiyljknOHfdvAXEUwH0vIJ+pVa4ORC52167MY5A7YG/R0mv7A11oGuHO3VqlymDd4SU2XIy6pPQFhb"
+        "cipher": "Gx0SER1dVkAZBwwHQlBfU0AAEBsdBQtAGgZJAB4XVAgaHgYZXFtXUFtSQF9MXxoHFQgIBhcIDB8cHg=="
       }
     }
   }
