@@ -92,12 +92,12 @@
     },
     "10013778/shanggou": {
       "createdAt": "2026-09-15T19:24:54.888Z",
-      "updatedAt": "2026-09-15T19:25:01.078Z",
+      "updatedAt": "2026-09-15T19:55:41.187Z",
       "updatedBy": "self",
       "encrypt": {
-        "method": "xor-b64",
+        "method": "aes-gcm",
         "key": "shanggou",
-        "cipher": "GxwVHhRdQFofHwQHVl5WR10PCBoPEg1bGgdODxcXQhIcBg4ZSFZfRUJbVllfSBwdEgYGCQgS"
+        "cipher": "tZHCbjkYc7CRv1M/zsYYaxbzA/qgSVl4LkrQb7Gfs/RONzt/f41WezIAgHGnH+tPfxZVaiGt9tjOrSC9+vJDR0dEL1smuccib3TpFsr5JEGeVJeAFamMrc2In0sbD2ufMps="
       }
     }
   }
