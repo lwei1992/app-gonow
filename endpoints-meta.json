@@ -92,8 +92,8 @@
     },
     "10013778/shanggou": {
       "createdAt": "2026-09-15T19:24:54.888Z",
-      "updatedAt": "2026-09-15T19:55:41.187Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-09-15T20:16:24.426Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "shanggou",
