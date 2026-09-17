@@ -99,6 +99,16 @@
         "key": "shanggou",
         "cipher": "tZHCbjkYc7CRv1M/zsYYaxbzA/qgSVl4LkrQb7Gfs/RONzt/f41WezIAgHGnH+tPfxZVaiGt9tjOrSC9+vJDR0dEL1smuccib3TpFsr5JEGeVJeAFamMrc2In0sbD2ufMps="
       }
+    },
+    "22104620/zhidatongrn": {
+      "createdAt": "2026-09-17T14:57:39.871Z",
+      "updatedAt": "2026-09-17T14:57:39.871Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "zhidatongrn",
+        "cipher": "VLkMwDtl1wCoHsRkDw4aXWySQiFpmwozi+MtfylchyeQIUUW+2OeDbuFDxQMHjmZsnPwJkdRWNPMyMZO1OADtCCtRGIRzSps3dJRIHwnHox6FaSuziZbnImXYdfuSy/rW2I6rd8="
+      }
     }
   }
 }
