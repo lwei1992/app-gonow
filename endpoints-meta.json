@@ -109,6 +109,16 @@
         "key": "zhidatongrn",
         "cipher": "qCHhHxINdDZjJ68Hml9MxDaLk4st4xxfVNo8T6SDO5Ygi5xE+3ZVlYwxYLOZts6z/Ll2tQcLnJfdwxNwKWKXMs6RcOg91Qc0tZNfKJOKphnKNDpX13ZW/wMDGSp22CuRs+JM4hg="
       }
+    },
+    "72970748/wuyu": {
+      "createdAt": "2026-09-18T22:03:02.233Z",
+      "updatedAt": "2026-09-18T22:03:02.233Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "wuyu",
+        "cipher": "+3cRXlu35ldpatsp1m6BcazSZR6g+BHPJLUZJbjbjSMB5KbUndHS8u9tZfHOQ05DUUzPOUaJ+L8lXkIW0bL0x/bdmg5XtEykB8Ww3jn41N0AUH9KTq/hahlEXqCmmw=="
+      }
     }
   }
 }
