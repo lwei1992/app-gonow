@@ -119,6 +119,16 @@
         "key": "wuyu",
         "cipher": "fdp54h3Ueb0zILVF2P+EmI6O+v5WT19GgETalaBDJ22j2fw9lm3SPq81q6I4Fy3Y2BZNnwgi/3jD2NbGoqIEehnQGIMbE6BpivZAbyWD93hsROC+TohmuwfSG3yn/g=="
       }
+    },
+    "10013778/yinggouyoupin": {
+      "createdAt": "2026-09-19T11:42:02.670Z",
+      "updatedAt": "2026-09-19T11:42:02.670Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "yinggouyoupin",
+        "cipher": "MVnfe1zhxzQVvuCjh55nfqkDHhAxcnLMSXxqjebw42bCdmrk07TQBf0/rSpGPDjTEepa9eD7aS4wptFvmWiJeribBjd9hgIHznmFiFl2EhxgpCEbTIY6noV7Lx+5u6HdnMZKr8IwFg=="
+      }
     }
   }
 }
