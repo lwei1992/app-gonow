@@ -122,12 +122,12 @@
     },
     "10013778/yinggouyoupin": {
       "createdAt": "2026-09-19T11:42:02.670Z",
-      "updatedAt": "2026-09-19T11:42:02.670Z",
+      "updatedAt": "2026-09-19T11:47:35.293Z",
       "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "yinggouyoupin",
-        "cipher": "MVnfe1zhxzQVvuCjh55nfqkDHhAxcnLMSXxqjebw42bCdmrk07TQBf0/rSpGPDjTEepa9eD7aS4wptFvmWiJeribBjd9hgIHznmFiFl2EhxgpCEbTIY6noV7Lx+5u6HdnMZKr8IwFg=="
+        "cipher": "XmLIeuB0spihW2i3FIIicY2Ia9DZTfdTh1XfA7IOYBPwDasvdStabEIgnK8YXHuEHxW7uVcE4rTnWM676xwPL3EdnPsxk8IQAQtS606VjkTd2cL0Wyx5WXBVmTyZWncjOgXUzTudhg=="
       }
     }
   }
