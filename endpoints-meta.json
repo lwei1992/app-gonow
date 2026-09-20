@@ -129,6 +129,16 @@
         "key": "yinggouyoupin",
         "cipher": "E0WwIiPKj0iOUgYnPY0N8LmRRMDNerk4FDXwy8mSx30Le35GM6rD75euNBiDxYRfJzYUfuS/woJX0Tyjp72iqWWqKAWTBOYGtASH1/e1KuBjjaCkAN1OQwTKOn3DA2Dlw3YqeAqprw=="
       }
+    },
+    "22104620/Biketmins": {
+      "createdAt": "2026-09-20T16:13:39.088Z",
+      "updatedAt": "2026-09-20T16:13:39.088Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "Biketmins",
+        "cipher": "UFhq89dtIMCHxfDnYCyKOspIngjHsr/z8LinQg0Rx0dX+wOYMzxuLsP6FXosCbSGSPxqOXFnLnO++Z1rlKF/j7vD+cRbvIBj6wiRYh9Bt+utS0+kgqGsn+dG9P7IrjaNa8xq"
+      }
     }
   }
 }
