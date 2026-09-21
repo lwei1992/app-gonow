@@ -100,16 +100,6 @@
         "cipher": "tZHCbjkYc7CRv1M/zsYYaxbzA/qgSVl4LkrQb7Gfs/RONzt/f41WezIAgHGnH+tPfxZVaiGt9tjOrSC9+vJDR0dEL1smuccib3TpFsr5JEGeVJeAFamMrc2In0sbD2ufMps="
       }
     },
-    "22104620/zhidatongrn": {
-      "createdAt": "2026-09-17T14:57:39.871Z",
-      "updatedAt": "2026-09-17T15:43:37.228Z",
-      "updatedBy": "self",
-      "encrypt": {
-        "method": "aes-gcm",
-        "key": "zhidatongrn",
-        "cipher": "qCHhHxINdDZjJ68Hml9MxDaLk4st4xxfVNo8T6SDO5Ygi5xE+3ZVlYwxYLOZts6z/Ll2tQcLnJfdwxNwKWKXMs6RcOg91Qc0tZNfKJOKphnKNDpX13ZW/wMDGSp22CuRs+JM4hg="
-      }
-    },
     "72970748/wuyu": {
       "createdAt": "2026-09-18T22:03:02.233Z",
       "updatedAt": "2026-09-18T23:13:20.254Z",
@@ -132,8 +122,8 @@
     },
     "22104620/Biketmins": {
       "createdAt": "2026-09-20T16:13:39.088Z",
-      "updatedAt": "2026-09-21T11:09:40.958Z",
-      "updatedBy": "customer",
+      "updatedAt": "2026-09-20T16:13:39.088Z",
+      "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "Biketmins",
