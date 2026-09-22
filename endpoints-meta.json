@@ -122,8 +122,8 @@
     },
     "44225831/qinggou": {
       "createdAt": "2026-09-22T09:03:26.048Z",
-      "updatedAt": "2026-09-22T09:03:26.048Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-09-22T09:12:25.069Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "qinggou",
