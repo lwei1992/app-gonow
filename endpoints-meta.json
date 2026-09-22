@@ -122,7 +122,7 @@
     },
     "44225831/qinggou": {
       "createdAt": "2026-09-22T09:03:26.048Z",
-      "updatedAt": "2026-09-22T09:12:25.069Z",
+      "updatedAt": "2026-09-22T09:17:20.278Z",
       "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
