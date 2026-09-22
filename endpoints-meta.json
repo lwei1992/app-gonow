@@ -112,8 +112,8 @@
     },
     "22104620/Biketmins": {
       "createdAt": "2026-09-20T16:13:39.088Z",
-      "updatedAt": "2026-09-20T16:13:39.088Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-09-22T17:11:14.178Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "Biketmins",
