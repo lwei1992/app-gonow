@@ -132,8 +132,8 @@
     },
     "13326571/chengziyoupin": {
       "createdAt": "2026-09-27T11:28:47.657Z",
-      "updatedAt": "2026-09-27T11:28:47.657Z",
-      "updatedBy": "self",
+      "updatedAt": "2026-09-27T11:36:58.674Z",
+      "updatedBy": "customer",
       "encrypt": {
         "method": "aes-gcm",
         "key": "chengziyoupin",
