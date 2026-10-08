@@ -157,12 +157,22 @@
     },
     "44420618/shuiguoyoupin": {
       "createdAt": "2026-10-03T04:37:40.238Z",
-      "updatedAt": "2026-10-03T06:59:39.721Z",
-      "updatedBy": "customer",
+      "updatedAt": "2026-10-03T04:37:40.238Z",
+      "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "shuiguoyoupin",
         "cipher": "LfO0/3YzbxoBD5cW9xhW9Q+uZqJhWLWE25irMUn1GpCRDWEre3K34ODCJcMTQ4dyiWTiRdtX2G3vWjbhkxgkhN6JtBf/MeW1lcdFOJL3N7E5AjEGWWGSiJsKXu5ewKPAHQ487T/OAg=="
+      }
+    },
+    "51314751/qingqingyoupin": {
+      "createdAt": "2026-10-08T05:00:14.861Z",
+      "updatedAt": "2026-10-08T05:00:14.861Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "qingqingyoupin",
+        "cipher": "l7NYjA1a4xrMdrsgpTIwkNeEjL4dzaHwAB039W+uyPDjssMpMJ3a+6kLFEKoak20cUoMMVk2ApiMblUNcXlXNvvU8jS7j1xPHk6aNdcvL0p66jqi5ta7IoNV/H/YYbg6bh1tctUV+7w="
       }
     }
   }
