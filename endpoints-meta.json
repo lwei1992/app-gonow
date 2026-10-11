@@ -177,7 +177,7 @@
     },
     "93612146/PomegSlot": {
       "createdAt": "2026-10-11T07:48:31.479Z",
-      "updatedAt": "2026-10-11T08:15:45.348Z",
+      "updatedAt": "2026-10-11T08:16:47.691Z",
       "updatedBy": "customer",
       "encrypt": {
         "method": "xor-b64",
