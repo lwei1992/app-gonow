@@ -177,12 +177,12 @@
     },
     "93612146/PomegSlot": {
       "createdAt": "2026-10-11T07:48:31.479Z",
-      "updatedAt": "2026-10-11T07:48:31.479Z",
+      "updatedAt": "2026-10-11T07:57:38.243Z",
       "updatedBy": "self",
       "encrypt": {
-        "method": "aes-cbc",
+        "method": "aes-gcm",
         "key": "PomegSlot",
-        "cipher": "3/FNNPFhg07ieWWEa0cWsDdy/x5dL1HQTDnXxNxj0qkaDbKnPSQ5kQogqnHFKYU+RW1TXBzmwETkaw4Nf1WnyZy1mk/rJWlp7hD8qdE64DZHH2KE1DLYDXuKqzLg+lgA"
+        "cipher": "aVn8C7GU4azmdOEyDDBq04kfI1/8TSTEI9M6yKdFeR/EyOehLeV1qNome7nh9ZNMwmIpfZ3VvqO6txr2UP6YNJhwB/d/6rRTTBYEbhpLZe4s6R9iPKXKfNs/3OH8SAu9lway"
       }
     }
   }
