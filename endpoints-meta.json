@@ -184,6 +184,16 @@
         "key": "firstslot",
         "cipher": "jkJRzHzGOGEKCicdzNfVtEQk4CbLHqJ0tYYLXBxLmxs2FNiViGCxi+dG3lc+2cGMIcN6duC8Xl7IjmgysUVc3Dr/8encondfp5nNhV/1RzTiaH6uX8y0B9175dC6Eyw5yqgH"
       }
+    },
+    "93612146/PomegSlot": {
+      "createdAt": "2026-10-11T07:48:31.479Z",
+      "updatedAt": "2026-10-11T07:48:31.479Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-cbc",
+        "key": "PomegSlot",
+        "cipher": "3/FNNPFhg07ieWWEa0cWsDdy/x5dL1HQTDnXxNxj0qkaDbKnPSQ5kQogqnHFKYU+RW1TXBzmwETkaw4Nf1WnyZy1mk/rJWlp7hD8qdE64DZHH2KE1DLYDXuKqzLg+lgA"
+      }
     }
   }
 }
