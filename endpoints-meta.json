@@ -167,12 +167,22 @@
     },
     "51314751/qingqingyoupin": {
       "createdAt": "2026-10-08T05:00:14.861Z",
-      "updatedAt": "2026-10-08T05:14:34.819Z",
-      "updatedBy": "customer",
+      "updatedAt": "2026-10-08T05:00:14.861Z",
+      "updatedBy": "self",
       "encrypt": {
         "method": "aes-gcm",
         "key": "qingqingyoupin",
         "cipher": "l7NYjA1a4xrMdrsgpTIwkNeEjL4dzaHwAB039W+uyPDjssMpMJ3a+6kLFEKoak20cUoMMVk2ApiMblUNcXlXNvvU8jS7j1xPHk6aNdcvL0p66jqi5ta7IoNV/H/YYbg6bh1tctUV+7w="
+      }
+    },
+    "93612146/firstslot": {
+      "createdAt": "2026-10-11T03:33:26.430Z",
+      "updatedAt": "2026-10-11T03:33:26.430Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "aes-gcm",
+        "key": "firstslot",
+        "cipher": "jkJRzHzGOGEKCicdzNfVtEQk4CbLHqJ0tYYLXBxLmxs2FNiViGCxi+dG3lc+2cGMIcN6duC8Xl7IjmgysUVc3Dr/8encondfp5nNhV/1RzTiaH6uX8y0B9175dC6Eyw5yqgH"
       }
     }
   }
