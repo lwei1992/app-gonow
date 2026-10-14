@@ -177,12 +177,22 @@
     },
     "93612146/PomegSlot": {
       "createdAt": "2026-10-11T07:48:31.479Z",
-      "updatedAt": "2026-10-12T05:57:50.123Z",
-      "updatedBy": "customer",
+      "updatedAt": "2026-10-11T08:01:36.813Z",
+      "updatedBy": "self",
       "encrypt": {
         "method": "xor-b64",
         "key": "PomegSlot",
         "cipher": "OBsZFRRpQ0AYJwoEVF5qXkETORsFEAV9BQBbMR8dSAA8AgADf1ZeU1ZhXVtCfz8CCAI0PwMbJA=="
+      }
+    },
+    "43468240/meiyiyoupin": {
+      "createdAt": "2026-10-14T06:29:48.137Z",
+      "updatedAt": "2026-10-14T06:29:48.137Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "xor-b64",
+        "key": "meiyiyoupin",
+        "cipher": "BREdCRpDQFocHgsEVFBAW1cIHAQBGw9LABZGGB8FXQ4BAwoeVl1KW0NIW1pdSgQcAAAGDB8cHgQL"
       }
     }
   }
