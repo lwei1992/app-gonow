@@ -187,7 +187,7 @@
     },
     "43468240/meiyiyoupin": {
       "createdAt": "2026-10-14T06:29:48.137Z",
-      "updatedAt": "2026-10-14T06:50:12.742Z",
+      "updatedAt": "2026-10-14T06:51:18.902Z",
       "updatedBy": "customer",
       "encrypt": {
         "method": "xor-b64",
