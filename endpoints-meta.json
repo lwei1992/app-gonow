@@ -194,6 +194,11 @@
         "key": "meiyiyoupin",
         "cipher": "BREdCRpDQFocHgsEVFBAW1cIHAQBGw9LABZGGB8FXQ4BAwoeVl1KW0NIW1pdSgQcAAAGDB8cHgQL"
       }
+    },
+    "35189892/mashangyoupin": {
+      "createdAt": "2026-10-17T08:04:13.135Z",
+      "updatedAt": "2026-10-17T08:04:13.135Z",
+      "updatedBy": "self"
     }
   }
 }
