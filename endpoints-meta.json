@@ -197,8 +197,18 @@
     },
     "35189892/mashangyoupin": {
       "createdAt": "2026-10-17T08:04:13.135Z",
-      "updatedAt": "2026-10-19T08:02:02.108Z",
-      "updatedBy": "customer"
+      "updatedAt": "2026-10-17T08:14:01.581Z",
+      "updatedBy": "self"
+    },
+    "98156252/BreadFreshs": {
+      "createdAt": "2026-10-22T04:21:07.395Z",
+      "updatedAt": "2026-10-22T04:21:07.395Z",
+      "updatedBy": "self",
+      "encrypt": {
+        "method": "xor-b64",
+        "key": "BreadFreshs",
+        "cipher": "KgYRERd8XUofHxYrQ1xYVmgVDAcABiBcDA5LJwIVXg8cLB0STl1+Q1BFWkZwXScTAScWIwENACoB"
+      }
     }
   }
 }
